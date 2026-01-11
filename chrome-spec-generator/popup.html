@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>仕様書ジェネレーター</title>
+  <style>
+    /* 拡張機能のポップアップスタイル */
+    body {
+      width: 300px;
+      padding: 20px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+    }
+
+    h1 {
+      font-size: 18px;
+      margin: 0 0 15px 0;
+      color: #333;
+    }
+
+    p {
+      font-size: 13px;
+      color: #666;
+      margin: 0 0 15px 0;
+      line-height: 1.5;
+    }
+
+    #generateBtn {
+      width: 100%;
+      padding: 12px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    #generateBtn:hover {
+      background-color: #45a049;
+    }
+
+    #generateBtn:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+
+    #status {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #666;
+      text-align: center;
+      min-height: 18px;
+    }
+
+    .loading {
+      color: #2196F3;
+    }
+
+    .error {
+      color: #f44336;
+    }
+
+    .success {
+      color: #4CAF50;
+    }
+  </style>
+</head>
+<body>
+  <!-- 拡張機能のポップアップUI -->
+  <h1>📋 仕様書ジェネレーター</h1>
+  <p>現在のページから仕様書のたたき台を自動生成します。</p>
+
+  <!-- 要約生成ボタン -->
+  <button id="generateBtn">仕様書を生成</button>
+
+  <!-- ステータス表示エリア -->
+  <div id="status"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

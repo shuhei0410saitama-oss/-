@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- 背景 -->
+  <rect width="128" height="128" rx="20" fill="#4CAF50"/>
+
+  <!-- 書類アイコン -->
+  <rect x="32" y="24" width="64" height="80" rx="4" fill="white"/>
+
+  <!-- 折り目 -->
+  <path d="M 80 24 L 80 40 L 96 40 Z" fill="#E8F5E9"/>
+
+  <!-- テキスト行 -->
+  <rect x="40" y="48" width="48" height="4" rx="2" fill="#4CAF50"/>
+  <rect x="40" y="58" width="48" height="4" rx="2" fill="#81C784"/>
+  <rect x="40" y="68" width="40" height="4" rx="2" fill="#81C784"/>
+  <rect x="40" y="78" width="44" height="4" rx="2" fill="#81C784"/>
+  <rect x="40" y="88" width="36" height="4" rx="2" fill="#81C784"/>
+</svg>
