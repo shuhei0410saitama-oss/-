@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "CSS図解ツール",
-  "version": "1.0.0",
-  "description": "Webページの要素を選択して、CSS・HTML構造を視覚的に図解します",
+  "name": "コンテンツ図解ツール",
+  "version": "2.0.0",
+  "description": "Webページの内容を選択して、要点や構造を分かりやすく図解します",
 
   "permissions": [
     "activeTab",

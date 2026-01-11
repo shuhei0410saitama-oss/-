@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CSS図解 - CSS図解ツール</title>
+  <title>コンテンツ図解 - コンテンツ図解ツール</title>
   <style>
     /* 図解表示ページのスタイル */
     * {
@@ -13,14 +13,14 @@
     }
 
     body {
-      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      font-family: 'Segoe UI', 'Hiragino Kaku Gothic ProN', 'メイリオ', sans-serif;
       background-color: #f5f5f5;
       padding: 20px;
-      line-height: 1.6;
+      line-height: 1.8;
     }
 
     .container {
-      max-width: 1200px;
+      max-width: 1000px;
       margin: 0 auto;
       background-color: white;
       padding: 40px;
@@ -29,7 +29,7 @@
     }
 
     header {
-      border-bottom: 3px solid #2196F3;
+      border-bottom: 3px solid #4CAF50;
       padding-bottom: 20px;
       margin-bottom: 30px;
     }
@@ -38,183 +38,152 @@
       color: #333;
       font-size: 28px;
       margin-bottom: 10px;
-      font-family: 'Segoe UI', sans-serif;
     }
 
-    .selector-path {
-      font-size: 14px;
-      color: #2196F3;
-      background-color: #e3f2fd;
-      padding: 10px 15px;
+    .title-box {
+      font-size: 20px;
+      font-weight: bold;
+      color: #4CAF50;
+      background-color: #E8F5E9;
+      padding: 15px 20px;
       border-radius: 4px;
-      margin-top: 10px;
-      word-break: break-all;
+      margin-top: 15px;
     }
 
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 30px;
-      margin-bottom: 30px;
+    .stats {
+      display: flex;
+      gap: 20px;
+      margin-top: 15px;
+      font-size: 14px;
+      color: #666;
     }
 
-    @media (max-width: 900px) {
-      .grid {
-        grid-template-columns: 1fr;
-      }
+    .stat-item {
+      background-color: #f5f5f5;
+      padding: 8px 15px;
+      border-radius: 4px;
     }
 
     .section {
-      margin-bottom: 30px;
+      margin-bottom: 35px;
     }
 
     .section h2 {
-      color: #2196F3;
+      color: #4CAF50;
       font-size: 20px;
       margin-bottom: 15px;
       padding-bottom: 8px;
       border-bottom: 2px solid #e0e0e0;
-      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
-    .box-model {
-      background-color: #fff3e0;
-      border: 2px solid #ff9800;
-      padding: 20px;
-      border-radius: 8px;
-      position: relative;
+    .section-content {
+      color: #444;
+      font-size: 15px;
     }
 
-    .box-layer {
-      border: 2px dashed;
-      padding: 15px;
-      margin: 10px;
-      position: relative;
-      text-align: center;
+    .headings-tree {
+      padding-left: 0;
     }
 
-    .margin-layer {
-      border-color: #f44336;
-      background-color: rgba(244, 67, 54, 0.1);
-    }
-
-    .border-layer {
-      border-color: #ff9800;
-      background-color: rgba(255, 152, 0, 0.1);
-    }
-
-    .padding-layer {
-      border-color: #4CAF50;
-      background-color: rgba(76, 175, 80, 0.1);
-    }
-
-    .content-layer {
-      border: 2px solid #2196F3;
-      background-color: rgba(33, 150, 243, 0.1);
-      padding: 20px;
-    }
-
-    .box-label {
-      font-size: 12px;
-      font-weight: bold;
-      margin-bottom: 5px;
-    }
-
-    .box-values {
-      font-size: 11px;
-      color: #666;
-    }
-
-    .props-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-    }
-
-    .props-table th {
-      background-color: #f5f5f5;
-      padding: 10px;
-      text-align: left;
-      border-bottom: 2px solid #ddd;
-      font-weight: 600;
-      color: #555;
-    }
-
-    .props-table td {
-      padding: 8px 10px;
-      border-bottom: 1px solid #eee;
-    }
-
-    .props-table tr:hover {
+    .heading-item {
+      padding: 10px 15px;
+      margin: 8px 0;
       background-color: #f9f9f9;
-    }
-
-    .prop-name {
-      color: #1976D2;
-      font-weight: 500;
-    }
-
-    .prop-value {
-      color: #333;
-      word-break: break-word;
-    }
-
-    .html-info {
-      background-color: #f5f5f5;
-      padding: 15px;
-      border-radius: 4px;
-      border-left: 4px solid #9C27B0;
-    }
-
-    .html-info .tag {
-      color: #9C27B0;
-      font-weight: bold;
-    }
-
-    .html-info .attr {
-      color: #FF9800;
-    }
-
-    .html-info .value {
-      color: #4CAF50;
-    }
-
-    .code-block {
-      background-color: #263238;
-      color: #aed581;
-      padding: 15px;
-      border-radius: 4px;
-      overflow-x: auto;
-      font-size: 12px;
-      margin-top: 10px;
-    }
-
-    .hierarchy {
-      background-color: #f5f5f5;
-      padding: 15px;
-      border-radius: 4px;
-    }
-
-    .hierarchy-item {
-      padding: 8px;
-      margin: 5px 0;
-      background-color: white;
-      border-left: 3px solid #2196F3;
+      border-left: 4px solid;
       border-radius: 3px;
     }
 
-    .parent {
-      border-left-color: #FF9800;
+    .heading-item.h1 { border-left-color: #F44336; padding-left: 15px; font-size: 16px; font-weight: bold; }
+    .heading-item.h2 { border-left-color: #FF9800; padding-left: 30px; font-size: 15px; }
+    .heading-item.h3 { border-left-color: #FFC107; padding-left: 45px; font-size: 14px; }
+    .heading-item.h4 { border-left-color: #4CAF50; padding-left: 60px; font-size: 13px; }
+    .heading-item.h5 { border-left-color: #2196F3; padding-left: 75px; font-size: 13px; }
+    .heading-item.h6 { border-left-color: #9C27B0; padding-left: 90px; font-size: 13px; }
+
+    .paragraph {
+      padding: 12px;
+      margin: 10px 0;
+      background-color: #fafafa;
+      border-left: 3px solid #2196F3;
+      border-radius: 3px;
+      line-height: 1.7;
     }
 
-    .current {
-      border-left-color: #4CAF50;
+    .paragraph-number {
+      display: inline-block;
+      background-color: #2196F3;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 3px;
+      font-size: 12px;
+      margin-right: 8px;
       font-weight: bold;
     }
 
-    .child {
-      border-left-color: #9C27B0;
+    .list-container {
+      margin: 15px 0;
+      padding: 15px;
+      background-color: #f9f9f9;
+      border-radius: 4px;
+    }
+
+    .list-container ul,
+    .list-container ol {
       margin-left: 20px;
+    }
+
+    .list-container li {
+      margin: 8px 0;
+      line-height: 1.6;
+    }
+
+    .keywords-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .keyword {
+      background-color: #E3F2FD;
+      color: #1976D2;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      border: 1px solid #BBDEFB;
+    }
+
+    .images-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+    }
+
+    .image-item {
+      background-color: #f5f5f5;
+      padding: 10px;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+
+    .image-item img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+
+    .empty-message {
+      color: #999;
+      font-style: italic;
+      padding: 15px;
+      text-align: center;
+      background-color: #fafafa;
+      border-radius: 4px;
     }
 
     .actions {
@@ -232,23 +201,21 @@
       font-size: 14px;
       cursor: pointer;
       transition: background-color 0.3s;
-      font-family: 'Segoe UI', sans-serif;
     }
 
     #copyBtn {
-      background-color: #2196F3;
+      background-color: #4CAF50;
       color: white;
     }
 
     #copyBtn:hover {
-      background-color: #0b7dda;
+      background-color: #45a049;
     }
 
     .loading {
       text-align: center;
       padding: 40px;
       color: #666;
-      font-family: 'Segoe UI', sans-serif;
     }
 
     @media print {
@@ -269,60 +236,56 @@
 <body>
   <div class="container">
     <div id="loading" class="loading">
-      <p>要素情報を読み込んでいます...</p>
+      <p>コンテンツ情報を読み込んでいます...</p>
     </div>
 
     <div id="content" style="display: none;">
       <!-- ヘッダー -->
       <header>
-        <h1>🎨 CSS図解</h1>
-        <div class="selector-path" id="selectorPath"></div>
+        <h1>📄 コンテンツ図解</h1>
+        <div class="title-box" id="titleBox"></div>
+        <div class="stats" id="stats"></div>
       </header>
 
-      <!-- グリッドレイアウト -->
-      <div class="grid">
-        <!-- ボックスモデル図 -->
-        <section class="section">
-          <h2>📦 ボックスモデル</h2>
-          <div id="boxModel"></div>
-        </section>
-
-        <!-- HTML情報 -->
-        <section class="section">
-          <h2>📄 HTML情報</h2>
-          <div id="htmlInfo"></div>
-        </section>
-      </div>
-
-      <!-- CSS プロパティ -->
-      <section class="section">
-        <h2>🎨 CSSプロパティ</h2>
-        <table class="props-table" id="cssPropsTable">
-          <thead>
-            <tr>
-              <th style="width: 30%">プロパティ</th>
-              <th style="width: 70%">値</th>
-            </tr>
-          </thead>
-          <tbody id="cssPropsBody"></tbody>
-        </table>
+      <!-- 見出し構造 -->
+      <section class="section" id="headingsSection">
+        <h2>📑 見出し構造</h2>
+        <div class="section-content">
+          <div class="headings-tree" id="headingsTree"></div>
+        </div>
       </section>
 
-      <!-- 階層構造 -->
-      <section class="section">
-        <h2>🌲 階層構造</h2>
-        <div class="hierarchy" id="hierarchy"></div>
+      <!-- 段落 -->
+      <section class="section" id="paragraphsSection">
+        <h2>📝 主な段落</h2>
+        <div class="section-content" id="paragraphs"></div>
       </section>
 
-      <!-- HTMLコード -->
-      <section class="section">
-        <h2>💻 HTMLコード</h2>
-        <div class="code-block" id="htmlCode"></div>
+      <!-- リスト -->
+      <section class="section" id="listsSection">
+        <h2>📋 リスト項目</h2>
+        <div class="section-content" id="lists"></div>
+      </section>
+
+      <!-- キーワード -->
+      <section class="section" id="keywordsSection">
+        <h2>🔑 キーワード</h2>
+        <div class="section-content">
+          <div class="keywords-grid" id="keywords"></div>
+        </div>
+      </section>
+
+      <!-- 画像 -->
+      <section class="section" id="imagesSection">
+        <h2>🖼️ 画像</h2>
+        <div class="section-content">
+          <div class="images-grid" id="images"></div>
+        </div>
       </section>
 
       <!-- アクションボタン -->
       <div class="actions">
-        <button id="copyBtn">📋 CSS情報をコピー</button>
+        <button id="copyBtn">📋 内容をコピー</button>
       </div>
     </div>
   </div>
