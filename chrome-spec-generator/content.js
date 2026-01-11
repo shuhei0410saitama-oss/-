@@ -79,9 +79,23 @@ function hideHighlight() {
  * @returns {Object} 要素のコンテンツ情報
  */
 function getElementInfo(element) {
-  // 見出しを抽出
+  // 見出しを抽出（選択要素自体も含む）
   const headings = [];
   const headingTags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
+
+  // 選択した要素自体が見出しかチェック
+  if (headingTags.includes(element.tagName.toLowerCase())) {
+    const text = element.textContent.trim();
+    if (text) {
+      headings.push({
+        level: element.tagName.toLowerCase(),
+        text: text,
+        order: 1
+      });
+    }
+  }
+
+  // 子要素の見出しを抽出
   headingTags.forEach(tag => {
     const elements = element.querySelectorAll(tag);
     elements.forEach(el => {
@@ -96,14 +110,27 @@ function getElementInfo(element) {
     });
   });
 
-  // 段落を抽出
+  // 段落を抽出（選択要素自体も含む）
   const paragraphs = [];
+
+  // 選択した要素自体がpタグかチェック
+  if (element.tagName.toLowerCase() === 'p') {
+    const text = element.textContent.trim();
+    if (text && text.length > 10) {
+      paragraphs.push({
+        index: 1,
+        text: text.substring(0, 300)
+      });
+    }
+  }
+
+  // 子要素の段落を抽出
   const pElements = element.querySelectorAll('p');
   pElements.forEach((p, index) => {
     const text = p.textContent.trim();
     if (text && text.length > 10) {
       paragraphs.push({
-        index: index + 1,
+        index: paragraphs.length + 1,
         text: text.substring(0, 300)
       });
     }
