@@ -239,8 +239,11 @@ function handleMouseOver(event) {
 async function handleClick(event) {
   if (!isSelectionMode) return;
 
+  console.log('CSS図解ツール: 要素がクリックされました', event.target);
+
   event.stopPropagation();
   event.preventDefault();
+  event.stopImmediatePropagation();
 
   const element = event.target;
 
@@ -267,10 +270,16 @@ async function handleClick(event) {
  */
 function startSelectionMode() {
   isSelectionMode = true;
-  document.addEventListener('mouseover', handleMouseOver, true);
-  document.addEventListener('click', handleClick, true);
+
+  // キャプチャフェーズで最優先でイベントを捕捉
+  document.addEventListener('mouseover', handleMouseOver, { capture: true, passive: false });
+  document.addEventListener('click', handleClick, { capture: true, passive: false });
+  document.addEventListener('mousedown', handleClick, { capture: true, passive: false });
+
   document.body.style.cursor = 'crosshair';
   createHighlightOverlay();
+
+  console.log('CSS図解ツール: 選択モード開始');
 }
 
 /**
@@ -280,9 +289,12 @@ function stopSelectionMode() {
   isSelectionMode = false;
   document.removeEventListener('mouseover', handleMouseOver, true);
   document.removeEventListener('click', handleClick, true);
+  document.removeEventListener('mousedown', handleClick, true);
   document.body.style.cursor = '';
   removeHighlightOverlay();
   hideHighlight();
+
+  console.log('CSS図解ツール: 選択モード終了');
 }
 
 /**
