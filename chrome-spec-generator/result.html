@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>コンテンツ図解 - コンテンツ図解ツール</title>
+  <title>HTML・CSS図解 - コンテンツ図解ツール</title>
   <style>
-    /* 図解表示ページのスタイル */
+    /* リセット */
     * {
       margin: 0;
       padding: 0;
@@ -14,218 +14,485 @@
 
     body {
       font-family: 'Segoe UI', 'Hiragino Kaku Gothic ProN', 'メイリオ', sans-serif;
-      background-color: #f5f5f5;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       padding: 20px;
-      line-height: 1.8;
+      line-height: 1.6;
+      color: #333;
     }
 
     .container {
-      max-width: 1000px;
+      max-width: 1400px;
       margin: 0 auto;
       background-color: white;
-      padding: 40px;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      overflow: hidden;
     }
 
+    /* ヘッダー */
     header {
-      border-bottom: 3px solid #4CAF50;
-      padding-bottom: 20px;
-      margin-bottom: 30px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px 40px;
     }
 
     h1 {
-      color: #333;
-      font-size: 28px;
+      font-size: 32px;
       margin-bottom: 10px;
-    }
-
-    .title-box {
-      font-size: 20px;
-      font-weight: bold;
-      color: #4CAF50;
-      background-color: #E8F5E9;
-      padding: 15px 20px;
-      border-radius: 4px;
-      margin-top: 15px;
-    }
-
-    .stats {
       display: flex;
-      gap: 20px;
-      margin-top: 15px;
-      font-size: 14px;
-      color: #666;
+      align-items: center;
+      gap: 12px;
     }
 
-    .stat-item {
-      background-color: #f5f5f5;
-      padding: 8px 15px;
+    .element-tag {
+      background-color: rgba(255,255,255,0.2);
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 18px;
+      font-family: 'Courier New', monospace;
+      border: 2px solid rgba(255,255,255,0.3);
+    }
+
+    .selector-path {
+      font-size: 14px;
+      opacity: 0.9;
+      font-family: 'Courier New', monospace;
+      margin-top: 8px;
+      background-color: rgba(0,0,0,0.2);
+      padding: 10px 15px;
       border-radius: 4px;
+      word-break: break-all;
+    }
+
+    /* メインコンテンツ */
+    .main-content {
+      padding: 40px;
     }
 
     .section {
-      margin-bottom: 35px;
+      margin-bottom: 40px;
     }
 
-    .section h2 {
-      color: #4CAF50;
-      font-size: 20px;
-      margin-bottom: 15px;
-      padding-bottom: 8px;
-      border-bottom: 2px solid #e0e0e0;
+    .section-title {
+      font-size: 24px;
+      color: #667eea;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 3px solid #667eea;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* ボックスモデル3D図解 */
+    .box-model-container {
+      perspective: 1000px;
+      display: flex;
+      justify-content: center;
+      padding: 40px 20px;
+      background: linear-gradient(to bottom, #f8f9fa, #e9ecef);
+      border-radius: 8px;
+    }
+
+    .box-model {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .box-layer {
+      border: 2px solid;
+      padding: 20px;
+      border-radius: 4px;
+      position: relative;
+      background-color: rgba(255,255,255,0.7);
+      transition: all 0.3s;
+    }
+
+    .box-layer:hover {
+      transform: scale(1.02);
+      z-index: 10;
+    }
+
+    .margin-box {
+      border-color: #f4a261;
+      background-color: rgba(244, 162, 97, 0.1);
+    }
+
+    .border-box {
+      border-color: #e76f51;
+      background-color: rgba(231, 111, 81, 0.1);
+    }
+
+    .padding-box {
+      border-color: #2a9d8f;
+      background-color: rgba(42, 157, 143, 0.1);
+    }
+
+    .content-box {
+      border-color: #264653;
+      background-color: rgba(38, 70, 83, 0.1);
+      min-width: 200px;
+      min-height: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: #264653;
+    }
+
+    .box-label {
+      position: absolute;
+      font-size: 12px;
+      font-weight: bold;
+      padding: 4px 8px;
+      border-radius: 3px;
+      color: white;
+    }
+
+    .margin-label { background-color: #f4a261; top: 5px; left: 5px; }
+    .border-label { background-color: #e76f51; top: 5px; right: 5px; }
+    .padding-label { background-color: #2a9d8f; bottom: 5px; left: 5px; }
+    .content-label { background-color: #264653; bottom: 5px; right: 5px; }
+
+    .box-values {
+      font-size: 11px;
+      color: #666;
+      margin-top: 4px;
+    }
+
+    /* サイズ情報 */
+    .size-info {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    .size-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .size-card-title {
+      font-size: 14px;
+      opacity: 0.9;
+      margin-bottom: 8px;
+    }
+
+    .size-card-value {
+      font-size: 28px;
+      font-weight: bold;
+      font-family: 'Courier New', monospace;
+    }
+
+    /* CSS プロパティ */
+    .css-properties {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .property-category {
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      padding: 20px;
+      border-left: 4px solid;
+    }
+
+    .property-category.layout { border-left-color: #e74c3c; }
+    .property-category.flexbox { border-left-color: #3498db; }
+    .property-category.grid { border-left-color: #9b59b6; }
+    .property-category.sizing { border-left-color: #f39c12; }
+    .property-category.text { border-left-color: #1abc9c; }
+    .property-category.background { border-left-color: #34495e; }
+    .property-category.border { border-left-color: #e67e22; }
+    .property-category.effects { border-left-color: #2ecc71; }
+
+    .category-title {
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 12px;
+      color: #333;
+    }
+
+    .property-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #dee2e6;
+      font-size: 13px;
+    }
+
+    .property-row:last-child {
+      border-bottom: none;
+    }
+
+    .property-name {
+      font-weight: 600;
+      color: #495057;
+      font-family: 'Courier New', monospace;
+    }
+
+    .property-value {
+      color: #6c757d;
+      font-family: 'Courier New', monospace;
+      text-align: right;
+      word-break: break-word;
+      max-width: 60%;
+    }
+
+    /* HTML 階層構造 */
+    .hierarchy-container {
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      padding: 20px;
+    }
+
+    .hierarchy-section {
+      margin-bottom: 25px;
+    }
+
+    .hierarchy-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .hierarchy-title {
+      font-size: 16px;
+      font-weight: bold;
+      color: #667eea;
+      margin-bottom: 12px;
       display: flex;
       align-items: center;
       gap: 8px;
     }
 
-    .section-content {
-      color: #444;
-      font-size: 15px;
-    }
-
-    .headings-tree {
-      padding-left: 0;
-    }
-
-    .heading-item {
-      padding: 10px 15px;
+    .element-card {
+      background-color: white;
+      border: 2px solid #dee2e6;
+      border-radius: 6px;
+      padding: 12px 15px;
       margin: 8px 0;
-      background-color: #f9f9f9;
-      border-left: 4px solid;
-      border-radius: 3px;
+      transition: all 0.2s;
+      cursor: pointer;
     }
 
-    .heading-item.h1 { border-left-color: #F44336; padding-left: 15px; font-size: 16px; font-weight: bold; }
-    .heading-item.h2 { border-left-color: #FF9800; padding-left: 30px; font-size: 15px; }
-    .heading-item.h3 { border-left-color: #FFC107; padding-left: 45px; font-size: 14px; }
-    .heading-item.h4 { border-left-color: #4CAF50; padding-left: 60px; font-size: 13px; }
-    .heading-item.h5 { border-left-color: #2196F3; padding-left: 75px; font-size: 13px; }
-    .heading-item.h6 { border-left-color: #9C27B0; padding-left: 90px; font-size: 13px; }
-
-    .paragraph {
-      padding: 12px;
-      margin: 10px 0;
-      background-color: #fafafa;
-      border-left: 3px solid #2196F3;
-      border-radius: 3px;
-      line-height: 1.7;
+    .element-card:hover {
+      border-color: #667eea;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+      transform: translateX(5px);
     }
 
-    .paragraph-number {
-      display: inline-block;
-      background-color: #2196F3;
+    .element-card.current {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
-      padding: 2px 8px;
-      border-radius: 3px;
-      font-size: 12px;
-      margin-right: 8px;
+      border-color: #667eea;
+    }
+
+    .element-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .element-tag-small {
+      background-color: #e9ecef;
+      color: #495057;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
       font-weight: bold;
     }
 
-    .list-container {
-      margin: 15px 0;
-      padding: 15px;
-      background-color: #f9f9f9;
-      border-radius: 4px;
+    .element-card.current .element-tag-small {
+      background-color: rgba(255,255,255,0.3);
+      color: white;
     }
 
-    .list-container ul,
-    .list-container ol {
-      margin-left: 20px;
+    .element-id {
+      color: #e74c3c;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
     }
 
-    .list-container li {
-      margin: 8px 0;
-      line-height: 1.6;
+    .element-card.current .element-id {
+      color: #ffe0e0;
     }
 
-    .keywords-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 10px;
+    .element-classes {
+      color: #3498db;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
     }
 
-    .keyword {
-      background-color: #E3F2FD;
-      color: #1976D2;
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 13px;
-      border: 1px solid #BBDEFB;
+    .element-card.current .element-classes {
+      color: #d4e6ff;
     }
 
-    .images-grid {
+    .element-text {
+      color: #6c757d;
+      font-size: 12px;
+      margin-top: 6px;
+      font-style: italic;
+    }
+
+    .element-card.current .element-text {
+      color: rgba(255,255,255,0.8);
+    }
+
+    .children-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+    }
+
+    /* Flexbox/Grid 視覚化 */
+    .layout-visualization {
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      padding: 25px;
+      margin-top: 20px;
+    }
+
+    .layout-info {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
       gap: 15px;
-      margin-top: 15px;
     }
 
-    .image-item {
-      background-color: #f5f5f5;
-      padding: 10px;
-      border-radius: 4px;
-      font-size: 13px;
-    }
-
-    .image-item img {
-      max-width: 100%;
-      height: auto;
-      border-radius: 4px;
-      margin-bottom: 8px;
-    }
-
-    .empty-message {
-      color: #999;
-      font-style: italic;
+    .layout-property {
+      background-color: white;
       padding: 15px;
-      text-align: center;
-      background-color: #fafafa;
-      border-radius: 4px;
+      border-radius: 6px;
+      border-left: 4px solid #3498db;
     }
 
+    .layout-property-name {
+      font-weight: bold;
+      color: #495057;
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+
+    .layout-property-value {
+      color: #3498db;
+      font-family: 'Courier New', monospace;
+      font-size: 15px;
+    }
+
+    /* テキストコンテンツ */
+    .text-content-box {
+      background-color: #f8f9fa;
+      border: 2px dashed #dee2e6;
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 15px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .text-content {
+      color: #495057;
+      line-height: 1.8;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* アクションボタン */
     .actions {
       margin-top: 40px;
-      padding-top: 20px;
-      border-top: 1px solid #e0e0e0;
+      padding-top: 30px;
+      border-top: 2px solid #dee2e6;
       display: flex;
-      gap: 10px;
+      gap: 15px;
+      flex-wrap: wrap;
     }
 
     button {
-      padding: 10px 20px;
+      padding: 12px 24px;
       border: none;
-      border-radius: 4px;
-      font-size: 14px;
+      border-radius: 6px;
+      font-size: 15px;
+      font-weight: 600;
       cursor: pointer;
-      transition: background-color 0.3s;
+      transition: all 0.3s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
     }
 
     #copyBtn {
-      background-color: #4CAF50;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
     }
 
     #copyBtn:hover {
-      background-color: #45a049;
+      background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
     }
 
+    /* ローディング */
     .loading {
       text-align: center;
-      padding: 40px;
-      color: #666;
+      padding: 60px;
+      color: white;
+      font-size: 18px;
+    }
+
+    .loading-spinner {
+      border: 4px solid rgba(255,255,255,0.3);
+      border-top: 4px solid white;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* エンプティステート */
+    .empty-message {
+      color: #6c757d;
+      text-align: center;
+      padding: 20px;
+      font-style: italic;
+    }
+
+    /* レスポンシブ */
+    @media (max-width: 768px) {
+      .main-content {
+        padding: 20px;
+      }
+
+      .css-properties {
+        grid-template-columns: 1fr;
+      }
+
+      .size-info {
+        grid-template-columns: 1fr;
+      }
     }
 
     @media print {
       body {
-        background-color: white;
+        background: white;
         padding: 0;
       }
       .container {
         box-shadow: none;
-        padding: 20px;
       }
       .actions {
         display: none;
@@ -236,56 +503,58 @@
 <body>
   <div class="container">
     <div id="loading" class="loading">
-      <p>コンテンツ情報を読み込んでいます...</p>
+      <div class="loading-spinner"></div>
+      <p>HTML・CSS情報を読み込んでいます...</p>
     </div>
 
     <div id="content" style="display: none;">
       <!-- ヘッダー -->
       <header>
-        <h1>📄 コンテンツ図解</h1>
-        <div class="title-box" id="titleBox"></div>
-        <div class="stats" id="stats"></div>
+        <h1>
+          🎨 HTML・CSS 図解
+          <span class="element-tag" id="elementTag"></span>
+        </h1>
+        <div class="selector-path" id="selectorPath"></div>
       </header>
 
-      <!-- 見出し構造 -->
-      <section class="section" id="headingsSection">
-        <h2>📑 見出し構造</h2>
-        <div class="section-content">
-          <div class="headings-tree" id="headingsTree"></div>
+      <div class="main-content">
+        <!-- ボックスモデル -->
+        <section class="section">
+          <div class="section-title">📦 ボックスモデル</div>
+          <div class="box-model-container" id="boxModelContainer"></div>
+          <div class="size-info" id="sizeInfo"></div>
+        </section>
+
+        <!-- テキストコンテンツ -->
+        <section class="section" id="textContentSection">
+          <div class="section-title">📝 テキスト内容</div>
+          <div class="text-content-box">
+            <div class="text-content" id="textContent"></div>
+          </div>
+        </section>
+
+        <!-- HTML 階層構造 -->
+        <section class="section">
+          <div class="section-title">🌳 HTML 階層構造</div>
+          <div class="hierarchy-container" id="hierarchyContainer"></div>
+        </section>
+
+        <!-- Flexbox/Grid レイアウト -->
+        <section class="section" id="layoutSection" style="display: none;">
+          <div class="section-title" id="layoutTitle"></div>
+          <div class="layout-visualization" id="layoutVisualization"></div>
+        </section>
+
+        <!-- CSS プロパティ -->
+        <section class="section">
+          <div class="section-title">🎨 CSS プロパティ</div>
+          <div class="css-properties" id="cssProperties"></div>
+        </section>
+
+        <!-- アクションボタン -->
+        <div class="actions">
+          <button id="copyBtn">📋 すべての情報をコピー</button>
         </div>
-      </section>
-
-      <!-- 段落 -->
-      <section class="section" id="paragraphsSection">
-        <h2>📝 主な段落</h2>
-        <div class="section-content" id="paragraphs"></div>
-      </section>
-
-      <!-- リスト -->
-      <section class="section" id="listsSection">
-        <h2>📋 リスト項目</h2>
-        <div class="section-content" id="lists"></div>
-      </section>
-
-      <!-- キーワード -->
-      <section class="section" id="keywordsSection">
-        <h2>🔑 キーワード</h2>
-        <div class="section-content">
-          <div class="keywords-grid" id="keywords"></div>
-        </div>
-      </section>
-
-      <!-- 画像 -->
-      <section class="section" id="imagesSection">
-        <h2>🖼️ 画像</h2>
-        <div class="section-content">
-          <div class="images-grid" id="images"></div>
-        </div>
-      </section>
-
-      <!-- アクションボタン -->
-      <div class="actions">
-        <button id="copyBtn">📋 内容をコピー</button>
       </div>
     </div>
   </div>

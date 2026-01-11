@@ -74,145 +74,176 @@ function hideHighlight() {
 }
 
 /**
- * 要素のコンテンツ情報を取得
+ * 要素の詳細情報を取得（HTML・CSS図解用）
  * @param {HTMLElement} element - 情報を取得する要素
- * @returns {Object} 要素のコンテンツ情報
+ * @returns {Object} 要素の詳細情報
  */
 function getElementInfo(element) {
-  // 見出しを抽出（選択要素自体も含む）
-  const headings = [];
-  const headingTags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
+  // Computed Styleを取得
+  const computedStyle = window.getComputedStyle(element);
+  const rect = element.getBoundingClientRect();
 
-  // 選択した要素自体が見出しかチェック
-  if (headingTags.includes(element.tagName.toLowerCase())) {
-    const text = element.textContent.trim();
-    if (text) {
-      headings.push({
-        level: element.tagName.toLowerCase(),
-        text: text,
-        order: 1
-      });
+  // ボックスモデル情報
+  const boxModel = {
+    width: rect.width,
+    height: rect.height,
+    margin: {
+      top: parseFloat(computedStyle.marginTop),
+      right: parseFloat(computedStyle.marginRight),
+      bottom: parseFloat(computedStyle.marginBottom),
+      left: parseFloat(computedStyle.marginLeft)
+    },
+    border: {
+      top: parseFloat(computedStyle.borderTopWidth),
+      right: parseFloat(computedStyle.borderRightWidth),
+      bottom: parseFloat(computedStyle.borderBottomWidth),
+      left: parseFloat(computedStyle.borderLeftWidth)
+    },
+    padding: {
+      top: parseFloat(computedStyle.paddingTop),
+      right: parseFloat(computedStyle.paddingRight),
+      bottom: parseFloat(computedStyle.paddingBottom),
+      left: parseFloat(computedStyle.paddingLeft)
     }
-  }
+  };
 
-  // 子要素の見出しを抽出
-  headingTags.forEach(tag => {
-    const elements = element.querySelectorAll(tag);
-    elements.forEach(el => {
-      const text = el.textContent.trim();
-      if (text) {
-        headings.push({
-          level: tag,
-          text: text,
-          order: headings.length + 1
-        });
-      }
-    });
-  });
+  // 全てのCSSプロパティを取得（カテゴリ分け用）
+  const cssProperties = {
+    // レイアウト
+    display: computedStyle.display,
+    position: computedStyle.position,
+    float: computedStyle.float,
+    clear: computedStyle.clear,
+    zIndex: computedStyle.zIndex,
+    overflow: computedStyle.overflow,
+    overflowX: computedStyle.overflowX,
+    overflowY: computedStyle.overflowY,
 
-  // 段落を抽出（選択要素自体も含む）
-  const paragraphs = [];
+    // Flexbox
+    flexDirection: computedStyle.flexDirection,
+    flexWrap: computedStyle.flexWrap,
+    justifyContent: computedStyle.justifyContent,
+    alignItems: computedStyle.alignItems,
+    alignContent: computedStyle.alignContent,
+    flex: computedStyle.flex,
+    flexGrow: computedStyle.flexGrow,
+    flexShrink: computedStyle.flexShrink,
+    flexBasis: computedStyle.flexBasis,
+    order: computedStyle.order,
 
-  // 選択した要素自体がpタグかチェック
-  if (element.tagName.toLowerCase() === 'p') {
-    const text = element.textContent.trim();
-    if (text && text.length > 10) {
-      paragraphs.push({
-        index: 1,
-        text: text.substring(0, 300)
-      });
-    }
-  }
+    // Grid
+    gridTemplateColumns: computedStyle.gridTemplateColumns,
+    gridTemplateRows: computedStyle.gridTemplateRows,
+    gridGap: computedStyle.gridGap,
+    gridColumn: computedStyle.gridColumn,
+    gridRow: computedStyle.gridRow,
 
-  // 子要素の段落を抽出
-  const pElements = element.querySelectorAll('p');
-  pElements.forEach((p, index) => {
-    const text = p.textContent.trim();
-    if (text && text.length > 10) {
-      paragraphs.push({
-        index: paragraphs.length + 1,
-        text: text.substring(0, 300)
-      });
-    }
-  });
+    // サイズ
+    width: computedStyle.width,
+    height: computedStyle.height,
+    minWidth: computedStyle.minWidth,
+    minHeight: computedStyle.minHeight,
+    maxWidth: computedStyle.maxWidth,
+    maxHeight: computedStyle.maxHeight,
+    boxSizing: computedStyle.boxSizing,
 
-  // リストを抽出
-  const lists = [];
-  const listElements = element.querySelectorAll('ul, ol');
-  listElements.forEach((list, index) => {
-    const items = Array.from(list.querySelectorAll('li')).map(li => li.textContent.trim());
-    if (items.length > 0) {
-      lists.push({
-        type: list.tagName.toLowerCase(),
-        items: items
-      });
-    }
-  });
+    // 配置
+    top: computedStyle.top,
+    right: computedStyle.right,
+    bottom: computedStyle.bottom,
+    left: computedStyle.left,
 
-  // キーワードを抽出（太字、強調、リンク）
-  const keywords = new Set();
+    // テキスト
+    color: computedStyle.color,
+    fontSize: computedStyle.fontSize,
+    fontFamily: computedStyle.fontFamily,
+    fontWeight: computedStyle.fontWeight,
+    fontStyle: computedStyle.fontStyle,
+    lineHeight: computedStyle.lineHeight,
+    textAlign: computedStyle.textAlign,
+    textDecoration: computedStyle.textDecoration,
+    textTransform: computedStyle.textTransform,
+    letterSpacing: computedStyle.letterSpacing,
+    wordSpacing: computedStyle.wordSpacing,
 
-  // 太字・強調
-  element.querySelectorAll('strong, b, em, i').forEach(el => {
-    const text = el.textContent.trim();
-    if (text && text.length < 50) {
-      keywords.add(text);
-    }
-  });
+    // 背景
+    backgroundColor: computedStyle.backgroundColor,
+    backgroundImage: computedStyle.backgroundImage,
+    backgroundSize: computedStyle.backgroundSize,
+    backgroundPosition: computedStyle.backgroundPosition,
+    backgroundRepeat: computedStyle.backgroundRepeat,
 
-  // リンクテキスト
-  element.querySelectorAll('a').forEach(a => {
-    const text = a.textContent.trim();
-    if (text && text.length < 50) {
-      keywords.add(text);
-    }
-  });
+    // ボーダー
+    borderStyle: computedStyle.borderStyle,
+    borderColor: computedStyle.borderColor,
+    borderRadius: computedStyle.borderRadius,
+    borderTopLeftRadius: computedStyle.borderTopLeftRadius,
+    borderTopRightRadius: computedStyle.borderTopRightRadius,
+    borderBottomLeftRadius: computedStyle.borderBottomLeftRadius,
+    borderBottomRightRadius: computedStyle.borderBottomRightRadius,
 
-  // 画像情報
-  const images = [];
-  element.querySelectorAll('img').forEach(img => {
-    images.push({
-      alt: img.alt || '',
-      src: img.src || '',
-      title: img.title || ''
-    });
-  });
+    // エフェクト
+    opacity: computedStyle.opacity,
+    boxShadow: computedStyle.boxShadow,
+    textShadow: computedStyle.textShadow,
+    transform: computedStyle.transform,
+    transition: computedStyle.transition,
+    animation: computedStyle.animation,
+    filter: computedStyle.filter,
 
-  // メインテキスト
-  const mainText = element.textContent.trim();
+    // その他
+    cursor: computedStyle.cursor,
+    pointerEvents: computedStyle.pointerEvents,
+    visibility: computedStyle.visibility,
+  };
 
-  // タイトル（最初の見出しまたはタグ名）
-  let title = '';
-  if (headings.length > 0) {
-    title = headings[0].text;
-  } else if (element.getAttribute('title')) {
-    title = element.getAttribute('title');
-  } else {
-    title = `<${element.tagName.toLowerCase()}>`;
-  }
-
-  // 構造情報
-  const structure = {
+  // HTML情報
+  const htmlInfo = {
     tagName: element.tagName.toLowerCase(),
     id: element.id || '',
     classes: Array.from(element.classList),
-    hasHeadings: headings.length > 0,
-    hasParagraphs: paragraphs.length > 0,
-    hasLists: lists.length > 0,
-    hasImages: images.length > 0
+    attributes: Array.from(element.attributes).map(attr => ({
+      name: attr.name,
+      value: attr.value
+    }))
   };
 
+  // セレクタパス
+  const selectorPath = generateSelectorPath(element);
+
+  // 階層情報（親と子）
+  const hierarchy = {
+    parent: element.parentElement ? getSimpleElementInfo(element.parentElement) : null,
+    children: Array.from(element.children).slice(0, 20).map(child => getSimpleElementInfo(child)),
+    siblings: element.parentElement ?
+      Array.from(element.parentElement.children)
+        .filter(el => el !== element)
+        .slice(0, 10)
+        .map(sib => getSimpleElementInfo(sib)) : []
+  };
+
+  // テキスト内容（短縮版）
+  const textContent = element.textContent.trim().substring(0, 200);
+
   return {
-    title,
-    mainText: mainText.substring(0, 1000),
-    headings,
-    paragraphs,
-    lists,
-    keywords: Array.from(keywords).slice(0, 20),
-    images: images.slice(0, 5),
-    structure,
-    wordCount: mainText.split(/\s+/).length,
-    charCount: mainText.length
+    boxModel,
+    cssProperties,
+    htmlInfo,
+    selectorPath,
+    hierarchy,
+    textContent
+  };
+}
+
+/**
+ * 簡易要素情報を取得（階層表示用）
+ */
+function getSimpleElementInfo(element) {
+  return {
+    tagName: element.tagName.toLowerCase(),
+    id: element.id || '',
+    classes: Array.from(element.classList),
+    textContent: element.textContent.trim().substring(0, 50)
   };
 }
 
