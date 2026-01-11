@@ -237,7 +237,7 @@ function handleMouseOver(event) {
 async function handleClick(event) {
   if (!isSelectionMode) return;
 
-  console.log('CSS図解ツール: 要素がクリックされました', event.target);
+  console.log('コンテンツ図解ツール: 要素がクリックされました', event.target);
 
   event.stopPropagation();
   event.preventDefault();
@@ -277,7 +277,7 @@ function startSelectionMode() {
   document.body.style.cursor = 'crosshair';
   createHighlightOverlay();
 
-  console.log('CSS図解ツール: 選択モード開始');
+  console.log('コンテンツ図解ツール: 選択モード開始');
 }
 
 /**
@@ -292,7 +292,7 @@ function stopSelectionMode() {
   removeHighlightOverlay();
   hideHighlight();
 
-  console.log('CSS図解ツール: 選択モード終了');
+  console.log('コンテンツ図解ツール: 選択モード終了');
 }
 
 /**
@@ -313,4 +313,4 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 // content script読み込み完了のログ
-console.log('CSS図解ツール: content script loaded');
+console.log('コンテンツ図解ツール: content script loaded');

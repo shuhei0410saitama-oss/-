@@ -52,12 +52,23 @@ selectBtn.addEventListener('click', async () => {
     }
 
     // content scriptに選択モード開始のメッセージを送信
-    await chrome.tabs.sendMessage(tab.id, {
-      action: 'startSelection'
-    });
+    try {
+      await chrome.tabs.sendMessage(tab.id, {
+        action: 'startSelection'
+      });
 
-    // UIを選択モードに切り替え
-    activateSelectionMode();
+      // UIを選択モードに切り替え
+      activateSelectionMode();
+
+    } catch (msgError) {
+      // content scriptが読み込まれていない場合
+      if (msgError.message.includes('Could not establish connection') ||
+          msgError.message.includes('Receiving end does not exist')) {
+        showStatus('ページを再読み込み（F5）してください', 'error');
+      } else {
+        throw msgError;
+      }
+    }
 
   } catch (error) {
     console.error('エラー:', error);
