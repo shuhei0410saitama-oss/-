@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>生成された仕様書 - 仕様書ジェネレーター</title>
+  <title>CSS図解 - CSS図解ツール</title>
   <style>
-    /* 仕様書表示ページのスタイル */
+    /* 図解表示ページのスタイル */
     * {
       margin: 0;
       padding: 0;
@@ -13,14 +13,14 @@
     }
 
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
       background-color: #f5f5f5;
       padding: 20px;
       line-height: 1.6;
     }
 
     .container {
-      max-width: 900px;
+      max-width: 1200px;
       margin: 0 auto;
       background-color: white;
       padding: 40px;
@@ -29,7 +29,7 @@
     }
 
     header {
-      border-bottom: 3px solid #4CAF50;
+      border-bottom: 3px solid #2196F3;
       padding-bottom: 20px;
       margin-bottom: 30px;
     }
@@ -38,21 +38,30 @@
       color: #333;
       font-size: 28px;
       margin-bottom: 10px;
+      font-family: 'Segoe UI', sans-serif;
     }
 
-    .metadata {
+    .selector-path {
       font-size: 14px;
-      color: #666;
-      margin-top: 10px;
-    }
-
-    .metadata a {
       color: #2196F3;
-      text-decoration: none;
+      background-color: #e3f2fd;
+      padding: 10px 15px;
+      border-radius: 4px;
+      margin-top: 10px;
+      word-break: break-all;
     }
 
-    .metadata a:hover {
-      text-decoration: underline;
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-bottom: 30px;
+    }
+
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
     }
 
     .section {
@@ -60,50 +69,152 @@
     }
 
     .section h2 {
-      color: #4CAF50;
+      color: #2196F3;
       font-size: 20px;
       margin-bottom: 15px;
       padding-bottom: 8px;
       border-bottom: 2px solid #e0e0e0;
+      font-family: 'Segoe UI', sans-serif;
     }
 
-    .section-content {
-      color: #444;
-      font-size: 15px;
-      padding-left: 10px;
-    }
-
-    .section-content p {
-      margin-bottom: 10px;
-      white-space: pre-wrap;
-    }
-
-    ul {
-      list-style: none;
-      padding-left: 0;
-    }
-
-    li {
-      padding: 8px 0;
-      padding-left: 25px;
+    .box-model {
+      background-color: #fff3e0;
+      border: 2px solid #ff9800;
+      padding: 20px;
+      border-radius: 8px;
       position: relative;
     }
 
-    li:before {
-      content: "▸";
-      position: absolute;
-      left: 5px;
-      color: #4CAF50;
+    .box-layer {
+      border: 2px dashed;
+      padding: 15px;
+      margin: 10px;
+      position: relative;
+      text-align: center;
+    }
+
+    .margin-layer {
+      border-color: #f44336;
+      background-color: rgba(244, 67, 54, 0.1);
+    }
+
+    .border-layer {
+      border-color: #ff9800;
+      background-color: rgba(255, 152, 0, 0.1);
+    }
+
+    .padding-layer {
+      border-color: #4CAF50;
+      background-color: rgba(76, 175, 80, 0.1);
+    }
+
+    .content-layer {
+      border: 2px solid #2196F3;
+      background-color: rgba(33, 150, 243, 0.1);
+      padding: 20px;
+    }
+
+    .box-label {
+      font-size: 12px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .box-values {
+      font-size: 11px;
+      color: #666;
+    }
+
+    .props-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .props-table th {
+      background-color: #f5f5f5;
+      padding: 10px;
+      text-align: left;
+      border-bottom: 2px solid #ddd;
+      font-weight: 600;
+      color: #555;
+    }
+
+    .props-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .props-table tr:hover {
+      background-color: #f9f9f9;
+    }
+
+    .prop-name {
+      color: #1976D2;
+      font-weight: 500;
+    }
+
+    .prop-value {
+      color: #333;
+      word-break: break-word;
+    }
+
+    .html-info {
+      background-color: #f5f5f5;
+      padding: 15px;
+      border-radius: 4px;
+      border-left: 4px solid #9C27B0;
+    }
+
+    .html-info .tag {
+      color: #9C27B0;
       font-weight: bold;
     }
 
-    .notice {
-      background-color: #fff3cd;
-      border-left: 4px solid #ffc107;
+    .html-info .attr {
+      color: #FF9800;
+    }
+
+    .html-info .value {
+      color: #4CAF50;
+    }
+
+    .code-block {
+      background-color: #263238;
+      color: #aed581;
       padding: 15px;
-      margin: 20px 0;
-      font-size: 14px;
-      color: #856404;
+      border-radius: 4px;
+      overflow-x: auto;
+      font-size: 12px;
+      margin-top: 10px;
+    }
+
+    .hierarchy {
+      background-color: #f5f5f5;
+      padding: 15px;
+      border-radius: 4px;
+    }
+
+    .hierarchy-item {
+      padding: 8px;
+      margin: 5px 0;
+      background-color: white;
+      border-left: 3px solid #2196F3;
+      border-radius: 3px;
+    }
+
+    .parent {
+      border-left-color: #FF9800;
+    }
+
+    .current {
+      border-left-color: #4CAF50;
+      font-weight: bold;
+    }
+
+    .child {
+      border-left-color: #9C27B0;
+      margin-left: 20px;
     }
 
     .actions {
@@ -121,6 +232,7 @@
       font-size: 14px;
       cursor: pointer;
       transition: background-color 0.3s;
+      font-family: 'Segoe UI', sans-serif;
     }
 
     #copyBtn {
@@ -132,19 +244,11 @@
       background-color: #0b7dda;
     }
 
-    #printBtn {
-      background-color: #666;
-      color: white;
-    }
-
-    #printBtn:hover {
-      background-color: #555;
-    }
-
     .loading {
       text-align: center;
       padding: 40px;
       color: #666;
+      font-family: 'Segoe UI', sans-serif;
     }
 
     @media print {
@@ -159,76 +263,66 @@
       .actions {
         display: none;
       }
-      .notice {
-        display: none;
-      }
     }
   </style>
 </head>
 <body>
   <div class="container">
     <div id="loading" class="loading">
-      <p>仕様書を読み込んでいます...</p>
+      <p>要素情報を読み込んでいます...</p>
     </div>
 
     <div id="content" style="display: none;">
       <!-- ヘッダー -->
       <header>
-        <h1>📋 生成された仕様書</h1>
-        <div class="metadata">
-          <strong>対象ページ:</strong> <span id="pageTitle"></span><br>
-          <strong>URL:</strong> <a id="pageUrl" href="#" target="_blank"></a><br>
-          <strong>生成日時:</strong> <span id="generatedAt"></span>
-        </div>
+        <h1>🎨 CSS図解</h1>
+        <div class="selector-path" id="selectorPath"></div>
       </header>
 
-      <!-- 注意書き -->
-      <div class="notice" id="notice"></div>
+      <!-- グリッドレイアウト -->
+      <div class="grid">
+        <!-- ボックスモデル図 -->
+        <section class="section">
+          <h2>📦 ボックスモデル</h2>
+          <div id="boxModel"></div>
+        </section>
 
-      <!-- 1. このページは何のためのものか -->
+        <!-- HTML情報 -->
+        <section class="section">
+          <h2>📄 HTML情報</h2>
+          <div id="htmlInfo"></div>
+        </section>
+      </div>
+
+      <!-- CSS プロパティ -->
       <section class="section">
-        <h2>1. このページは何のためのものか</h2>
-        <div class="section-content">
-          <p id="purpose"></p>
-        </div>
+        <h2>🎨 CSSプロパティ</h2>
+        <table class="props-table" id="cssPropsTable">
+          <thead>
+            <tr>
+              <th style="width: 30%">プロパティ</th>
+              <th style="width: 70%">値</th>
+            </tr>
+          </thead>
+          <tbody id="cssPropsBody"></tbody>
+        </table>
       </section>
 
-      <!-- 2. 主な機能・内容 -->
+      <!-- 階層構造 -->
       <section class="section">
-        <h2>2. 主な機能・内容</h2>
-        <div class="section-content">
-          <ul id="mainFeatures"></ul>
-        </div>
+        <h2>🌲 階層構造</h2>
+        <div class="hierarchy" id="hierarchy"></div>
       </section>
 
-      <!-- 3. 想定される利用者 -->
+      <!-- HTMLコード -->
       <section class="section">
-        <h2>3. 想定される利用者</h2>
-        <div class="section-content">
-          <ul id="targetUsers"></ul>
-        </div>
-      </section>
-
-      <!-- 4. 制約・注意点 -->
-      <section class="section">
-        <h2>4. 制約・注意点</h2>
-        <div class="section-content">
-          <ul id="constraints"></ul>
-        </div>
-      </section>
-
-      <!-- 5. 不明点・読み取れなかった点 -->
-      <section class="section">
-        <h2>5. 不明点・読み取れなかった点</h2>
-        <div class="section-content">
-          <ul id="unknowns"></ul>
-        </div>
+        <h2>💻 HTMLコード</h2>
+        <div class="code-block" id="htmlCode"></div>
       </section>
 
       <!-- アクションボタン -->
       <div class="actions">
-        <button id="copyBtn">📋 テキストをコピー</button>
-        <button id="printBtn">🖨️ 印刷</button>
+        <button id="copyBtn">📋 CSS情報をコピー</button>
       </div>
     </div>
   </div>

@@ -1,12 +1,13 @@
 {
   "manifest_version": 3,
-  "name": "仕様書ジェネレーター",
+  "name": "CSS図解ツール",
   "version": "1.0.0",
-  "description": "現在のWebページから仕様書のたたき台を自動生成します",
+  "description": "Webページの要素を選択して、CSS・HTML構造を視覚的に図解します",
 
   "permissions": [
     "activeTab",
-    "scripting"
+    "scripting",
+    "storage"
   ],
 
   "action": {

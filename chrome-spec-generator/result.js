@@ -1,76 +1,213 @@
 /**
  * result.js
- * 役割: 生成された仕様書を表示するページのスクリプト
- * - chrome.storage.localから仕様書データを読み込む
- * - HTMLに仕様書の内容を動的に挿入
- * - コピー・印刷機能を提供
+ * 役割: 選択された要素の情報を視覚的に図解表示
+ * - chrome.storage.localから要素情報を読み込む
+ * - CSSボックスモデル図を描画
+ * - CSS プロパティ、HTML構造、階層を表示
  */
 
 /**
- * 配列をリスト項目として表示する関数
- * @param {Array} items - 表示する項目の配列
- * @param {HTMLElement} container - 項目を挿入するコンテナ要素
+ * ボックスモデル図を生成
+ * @param {Object} boxModel - ボックスモデル情報
+ * @returns {string} HTML文字列
  */
-function renderList(items, container) {
-  container.innerHTML = '';
+function renderBoxModel(boxModel) {
+  const { margin, border, padding, width, height } = boxModel;
 
-  if (!items || items.length === 0) {
-    const li = document.createElement('li');
-    li.textContent = '（なし）';
-    container.appendChild(li);
-    return;
+  // 内部コンテンツのサイズ計算
+  const contentWidth = width - (padding.left + padding.right + border.left + border.right);
+  const contentHeight = height - (padding.top + padding.bottom + border.top + border.bottom);
+
+  return `
+    <div class="box-model">
+      <!-- Margin Layer -->
+      <div class="box-layer margin-layer">
+        <div class="box-label">margin</div>
+        <div class="box-values">
+          ${margin.top.toFixed(1)}px | ${margin.right.toFixed(1)}px |
+          ${margin.bottom.toFixed(1)}px | ${margin.left.toFixed(1)}px
+        </div>
+
+        <!-- Border Layer -->
+        <div class="box-layer border-layer">
+          <div class="box-label">border</div>
+          <div class="box-values">
+            ${border.top.toFixed(1)}px | ${border.right.toFixed(1)}px |
+            ${border.bottom.toFixed(1)}px | ${border.left.toFixed(1)}px
+          </div>
+
+          <!-- Padding Layer -->
+          <div class="box-layer padding-layer">
+            <div class="box-label">padding</div>
+            <div class="box-values">
+              ${padding.top.toFixed(1)}px | ${padding.right.toFixed(1)}px |
+              ${padding.bottom.toFixed(1)}px | ${padding.left.toFixed(1)}px
+            </div>
+
+            <!-- Content Layer -->
+            <div class="content-layer">
+              <div class="box-label">content</div>
+              <div class="box-values">
+                ${contentWidth.toFixed(1)}px × ${contentHeight.toFixed(1)}px
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * HTML情報を生成
+ * @param {Object} htmlInfo - HTML情報
+ * @returns {string} HTML文字列
+ */
+function renderHtmlInfo(htmlInfo) {
+  const { tagName, id, classes, attributes } = htmlInfo;
+
+  let html = '<div class="html-info">';
+
+  // タグ名
+  html += `<div><span class="tag">&lt;${tagName}&gt;</span></div>`;
+
+  // ID
+  if (id) {
+    html += `<div style="margin-top: 10px;"><strong>ID:</strong> <span class="value">#${id}</span></div>`;
   }
 
-  items.forEach(item => {
-    const li = document.createElement('li');
-    li.textContent = item;
-    container.appendChild(li);
-  });
+  // クラス
+  if (classes.length > 0) {
+    html += `<div style="margin-top: 10px;"><strong>Classes:</strong> <span class="value">.${classes.join(', .')}</span></div>`;
+  }
+
+  // その他の属性
+  const otherAttrs = attributes.filter(attr => attr.name !== 'id' && attr.name !== 'class');
+  if (otherAttrs.length > 0) {
+    html += '<div style="margin-top: 10px;"><strong>Attributes:</strong></div>';
+    otherAttrs.forEach(attr => {
+      html += `<div style="margin-left: 10px;">
+        <span class="attr">${attr.name}</span>=<span class="value">"${attr.value}"</span>
+      </div>`;
+    });
+  }
+
+  html += '</div>';
+  return html;
 }
 
 /**
- * 日時を読みやすい形式にフォーマットする関数
- * @param {string} isoString - ISO形式の日時文字列
- * @returns {string} フォーマットされた日時文字列
+ * CSSプロパティのテーブル行を生成
+ * @param {Object} cssProperties - CSSプロパティ
  */
-function formatDateTime(isoString) {
-  const date = new Date(isoString);
-  return date.toLocaleString('ja-JP', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  });
+function renderCssProperties(cssProperties) {
+  const tbody = document.getElementById('cssPropsBody');
+  tbody.innerHTML = '';
+
+  // 重要なプロパティのみを表示（値が 'none', 'auto', '0px' などのデフォルト値以外）
+  for (const [prop, value] of Object.entries(cssProperties)) {
+    // デフォルト値をスキップ
+    if (value === 'none' || value === 'auto' || value === 'normal' ||
+        value === '0px' || value === 'rgba(0, 0, 0, 0)' || value === '') {
+      continue;
+    }
+
+    const row = document.createElement('tr');
+
+    const propCell = document.createElement('td');
+    propCell.className = 'prop-name';
+    propCell.textContent = prop;
+
+    const valueCell = document.createElement('td');
+    valueCell.className = 'prop-value';
+    valueCell.textContent = value;
+
+    row.appendChild(propCell);
+    row.appendChild(valueCell);
+    tbody.appendChild(row);
+  }
+
+  // プロパティが1つもない場合
+  if (tbody.children.length === 0) {
+    const row = document.createElement('tr');
+    const cell = document.createElement('td');
+    cell.colSpan = 2;
+    cell.textContent = '表示する主要なプロパティがありません';
+    cell.style.textAlign = 'center';
+    cell.style.color = '#999';
+    row.appendChild(cell);
+    tbody.appendChild(row);
+  }
 }
 
 /**
- * 仕様書データをHTMLに表示する関数
- * @param {Object} spec - 仕様書データ
+ * 階層構造を生成
+ * @param {Object} hierarchy - 階層情報
+ * @param {Object} htmlInfo - 現在の要素のHTML情報
  */
-function displaySpecification(spec) {
-  // メタデータを表示
-  document.getElementById('pageTitle').textContent = spec.metadata.pageTitle;
-  document.getElementById('pageUrl').textContent = spec.metadata.pageUrl;
-  document.getElementById('pageUrl').href = spec.metadata.pageUrl;
-  document.getElementById('generatedAt').textContent = formatDateTime(spec.metadata.generatedAt);
+function renderHierarchy(hierarchy, htmlInfo) {
+  const container = document.getElementById('hierarchy');
+  let html = '';
 
-  // 注意書きを表示（メタデータのnoteがあれば）
-  const noticeDiv = document.getElementById('notice');
-  if (spec.metadata.note) {
-    noticeDiv.textContent = '⚠️ ' + spec.metadata.note;
+  // 親要素
+  if (hierarchy.parent) {
+    const parent = hierarchy.parent;
+    const parentClasses = parent.classes.length > 0 ? '.' + parent.classes.join('.') : '';
+    const parentId = parent.id ? `#${parent.id}` : '';
+    html += `<div class="hierarchy-item parent">
+      <strong>親:</strong> &lt;${parent.tagName}${parentId}${parentClasses}&gt;
+    </div>`;
+  }
+
+  // 現在の要素
+  const currentClasses = htmlInfo.classes.length > 0 ? '.' + htmlInfo.classes.join('.') : '';
+  const currentId = htmlInfo.id ? `#${htmlInfo.id}` : '';
+  html += `<div class="hierarchy-item current">
+    <strong>選択中:</strong> &lt;${htmlInfo.tagName}${currentId}${currentClasses}&gt;
+  </div>`;
+
+  // 子要素
+  if (hierarchy.children.length > 0) {
+    html += '<div style="margin-top: 10px;"><strong>子要素:</strong></div>';
+    hierarchy.children.forEach(child => {
+      const childClasses = child.classes.length > 0 ? '.' + child.classes.join('.') : '';
+      const childId = child.id ? `#${child.id}` : '';
+      html += `<div class="hierarchy-item child">
+        &lt;${child.tagName}${childId}${childClasses}&gt;
+      </div>`;
+    });
   } else {
-    noticeDiv.style.display = 'none';
+    html += '<div style="margin-top: 10px; color: #999;">子要素なし</div>';
   }
 
-  // 各セクションのデータを表示
-  document.getElementById('purpose').textContent = spec.purpose || '（情報なし）';
+  container.innerHTML = html;
+}
 
-  renderList(spec.mainFeatures, document.getElementById('mainFeatures'));
-  renderList(spec.targetUsers, document.getElementById('targetUsers'));
-  renderList(spec.constraints, document.getElementById('constraints'));
-  renderList(spec.unknowns, document.getElementById('unknowns'));
+/**
+ * すべての要素情報を表示
+ * @param {Object} elementInfo - 要素情報
+ */
+function displayElementInfo(elementInfo) {
+  // セレクタパス
+  document.getElementById('selectorPath').textContent = elementInfo.selectorPath;
+
+  // ボックスモデル図
+  document.getElementById('boxModel').innerHTML = renderBoxModel(elementInfo.boxModel);
+
+  // HTML情報
+  document.getElementById('htmlInfo').innerHTML = renderHtmlInfo(elementInfo.htmlInfo);
+
+  // CSSプロパティ
+  renderCssProperties(elementInfo.cssProperties);
+
+  // 階層構造
+  renderHierarchy(elementInfo.hierarchy, elementInfo.htmlInfo);
+
+  // HTMLコード
+  const htmlCode = elementInfo.outerHTML
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+  document.getElementById('htmlCode').textContent = htmlCode;
 
   // ローディングを非表示、コンテンツを表示
   document.getElementById('loading').style.display = 'none';
@@ -78,61 +215,42 @@ function displaySpecification(spec) {
 }
 
 /**
- * 仕様書のテキストを取得する関数（コピー用）
- * @param {Object} spec - 仕様書データ
- * @returns {string} プレーンテキスト形式の仕様書
+ * CSS情報をテキストで取得（コピー用）
+ * @param {Object} elementInfo - 要素情報
+ * @returns {string} プレーンテキスト形式のCSS情報
  */
-function getSpecificationText(spec) {
-  let text = '━━━━━━━━━━━━━━━━━━━━━━\n';
-  text += '生成された仕様書\n';
-  text += '━━━━━━━━━━━━━━━━━━━━━━\n\n';
+function getElementInfoText(elementInfo) {
+  let text = '='.repeat(60) + '\n';
+  text += 'CSS図解 - 要素情報\n';
+  text += '='.repeat(60) + '\n\n';
 
-  text += `対象ページ: ${spec.metadata.pageTitle}\n`;
-  text += `URL: ${spec.metadata.pageUrl}\n`;
-  text += `生成日時: ${formatDateTime(spec.metadata.generatedAt)}\n\n`;
+  text += `セレクタ: ${elementInfo.selectorPath}\n\n`;
 
-  text += '━━━━━━━━━━━━━━━━━━━━━━\n\n';
+  text += '--- ボックスモデル ---\n';
+  const { margin, border, padding, width, height } = elementInfo.boxModel;
+  text += `Width: ${width.toFixed(1)}px\n`;
+  text += `Height: ${height.toFixed(1)}px\n`;
+  text += `Margin: ${margin.top.toFixed(1)}px ${margin.right.toFixed(1)}px ${margin.bottom.toFixed(1)}px ${margin.left.toFixed(1)}px\n`;
+  text += `Border: ${border.top.toFixed(1)}px ${border.right.toFixed(1)}px ${border.bottom.toFixed(1)}px ${border.left.toFixed(1)}px\n`;
+  text += `Padding: ${padding.top.toFixed(1)}px ${padding.right.toFixed(1)}px ${padding.bottom.toFixed(1)}px ${padding.left.toFixed(1)}px\n\n`;
 
-  text += '1. このページは何のためのものか\n';
-  text += '----------------------------------------\n';
-  text += spec.purpose + '\n\n';
-
-  text += '2. 主な機能・内容\n';
-  text += '----------------------------------------\n';
-  spec.mainFeatures.forEach((item, i) => {
-    text += `  ${i + 1}. ${item}\n`;
-  });
-  text += '\n';
-
-  text += '3. 想定される利用者\n';
-  text += '----------------------------------------\n';
-  spec.targetUsers.forEach((item, i) => {
-    text += `  ${i + 1}. ${item}\n`;
-  });
-  text += '\n';
-
-  text += '4. 制約・注意点\n';
-  text += '----------------------------------------\n';
-  if (spec.constraints.length > 0) {
-    spec.constraints.forEach((item, i) => {
-      text += `  ${i + 1}. ${item}\n`;
-    });
-  } else {
-    text += '  （なし）\n';
+  text += '--- HTML情報 ---\n';
+  text += `Tag: <${elementInfo.htmlInfo.tagName}>\n`;
+  if (elementInfo.htmlInfo.id) {
+    text += `ID: #${elementInfo.htmlInfo.id}\n`;
+  }
+  if (elementInfo.htmlInfo.classes.length > 0) {
+    text += `Classes: .${elementInfo.htmlInfo.classes.join(', .')}\n`;
   }
   text += '\n';
 
-  text += '5. 不明点・読み取れなかった点\n';
-  text += '----------------------------------------\n';
-  if (spec.unknowns.length > 0) {
-    spec.unknowns.forEach((item, i) => {
-      text += `  ${i + 1}. ${item}\n`;
-    });
-  } else {
-    text += '  （なし）\n';
+  text += '--- 主要なCSSプロパティ ---\n';
+  for (const [prop, value] of Object.entries(elementInfo.cssProperties)) {
+    if (value !== 'none' && value !== 'auto' && value !== 'normal' &&
+        value !== '0px' && value !== 'rgba(0, 0, 0, 0)' && value !== '') {
+      text += `${prop}: ${value}\n`;
+    }
   }
-
-  text += '\n━━━━━━━━━━━━━━━━━━━━━━\n';
 
   return text;
 }
@@ -141,27 +259,27 @@ function getSpecificationText(spec) {
  * ページ読み込み時の初期化処理
  */
 document.addEventListener('DOMContentLoaded', () => {
-  // chrome.storage.localから最新の仕様書データを取得
-  chrome.storage.local.get(['latestSpec'], (result) => {
+  // chrome.storage.localから最新の要素情報を取得
+  chrome.storage.local.get(['latestElementInfo'], (result) => {
     if (chrome.runtime.lastError) {
       console.error('ストレージ読み込みエラー:', chrome.runtime.lastError);
       document.getElementById('loading').innerHTML =
-        '<p style="color: red;">エラー: 仕様書データの読み込みに失敗しました</p>';
+        '<p style="color: red;">エラー: 要素情報の読み込みに失敗しました</p>';
       return;
     }
 
-    if (!result.latestSpec) {
+    if (!result.latestElementInfo) {
       document.getElementById('loading').innerHTML =
-        '<p style="color: red;">エラー: 仕様書データが見つかりません</p>';
+        '<p style="color: red;">エラー: 要素情報が見つかりません</p>';
       return;
     }
 
-    // 仕様書を表示
-    displaySpecification(result.latestSpec);
+    // 要素情報を表示
+    displayElementInfo(result.latestElementInfo);
 
     // コピーボタンのイベントリスナー
     document.getElementById('copyBtn').addEventListener('click', () => {
-      const text = getSpecificationText(result.latestSpec);
+      const text = getElementInfoText(result.latestElementInfo);
       navigator.clipboard.writeText(text).then(() => {
         const btn = document.getElementById('copyBtn');
         const originalText = btn.textContent;
@@ -173,11 +291,6 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('コピー失敗:', err);
         alert('コピーに失敗しました');
       });
-    });
-
-    // 印刷ボタンのイベントリスナー
-    document.getElementById('printBtn').addEventListener('click', () => {
-      window.print();
     });
   });
 });

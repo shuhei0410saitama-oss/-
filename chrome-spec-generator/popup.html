@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>仕様書ジェネレーター</title>
+  <title>CSS図解ツール</title>
   <style>
     /* 拡張機能のポップアップスタイル */
     body {
-      width: 300px;
+      width: 320px;
       padding: 20px;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       margin: 0;
@@ -15,7 +15,7 @@
 
     h1 {
       font-size: 18px;
-      margin: 0 0 15px 0;
+      margin: 0 0 10px 0;
       color: #333;
     }
 
@@ -26,10 +26,20 @@
       line-height: 1.5;
     }
 
-    #generateBtn {
+    .instruction {
+      background-color: #e3f2fd;
+      padding: 12px;
+      border-radius: 4px;
+      border-left: 4px solid #2196F3;
+      font-size: 12px;
+      color: #1565C0;
+      margin-bottom: 15px;
+    }
+
+    #selectBtn {
       width: 100%;
       padding: 12px;
-      background-color: #4CAF50;
+      background-color: #2196F3;
       color: white;
       border: none;
       border-radius: 4px;
@@ -38,13 +48,31 @@
       transition: background-color 0.3s;
     }
 
-    #generateBtn:hover {
-      background-color: #45a049;
+    #selectBtn:hover {
+      background-color: #1976D2;
     }
 
-    #generateBtn:disabled {
+    #selectBtn:disabled {
       background-color: #ccc;
       cursor: not-allowed;
+    }
+
+    #cancelBtn {
+      width: 100%;
+      padding: 12px;
+      background-color: #f44336;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      margin-top: 10px;
+      display: none;
+    }
+
+    #cancelBtn:hover {
+      background-color: #d32f2f;
     }
 
     #status {
@@ -66,15 +94,30 @@
     .success {
       color: #4CAF50;
     }
+
+    .active-mode {
+      color: #FF9800;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
   <!-- 拡張機能のポップアップUI -->
-  <h1>📋 仕様書ジェネレーター</h1>
-  <p>現在のページから仕様書のたたき台を自動生成します。</p>
+  <h1>🎨 CSS図解ツール</h1>
+  <p>ページ上の要素をクリックして、CSS・HTML構造を視覚的に図解します。</p>
 
-  <!-- 要約生成ボタン -->
-  <button id="generateBtn">仕様書を生成</button>
+  <div class="instruction">
+    <strong>使い方:</strong><br>
+    1. 「要素を選択」をクリック<br>
+    2. ページ上の要素にマウスオーバー<br>
+    3. 図解したい要素をクリック
+  </div>
+
+  <!-- 要素選択モード開始ボタン -->
+  <button id="selectBtn">🎯 要素を選択</button>
+
+  <!-- キャンセルボタン -->
+  <button id="cancelBtn">✕ 選択をキャンセル</button>
 
   <!-- ステータス表示エリア -->
   <div id="status"></div>

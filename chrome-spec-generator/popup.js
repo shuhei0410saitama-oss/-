@@ -1,19 +1,20 @@
 /**
  * popup.js
  * 役割: 拡張機能のポップアップUIを制御する
- * - ボタンクリックイベントを処理
- * - content scriptにメッセージを送信してページ内容を取得
- * - 取得したコンテンツを処理して結果ページを開く
+ * - 要素選択モードの開始/キャンセルを処理
+ * - content scriptに選択モード開始のメッセージを送信
+ * - 要素が選択されたら図解ページを開く
  */
 
 // DOM要素の取得
-const generateBtn = document.getElementById('generateBtn');
+const selectBtn = document.getElementById('selectBtn');
+const cancelBtn = document.getElementById('cancelBtn');
 const statusDiv = document.getElementById('status');
 
 /**
  * ステータスメッセージを表示する関数
  * @param {string} message - 表示するメッセージ
- * @param {string} type - メッセージタイプ ('loading', 'error', 'success')
+ * @param {string} type - メッセージタイプ ('loading', 'error', 'success', 'active-mode')
  */
 function showStatus(message, type = '') {
   statusDiv.textContent = message;
@@ -21,14 +22,28 @@ function showStatus(message, type = '') {
 }
 
 /**
- * 「仕様書を生成」ボタンのクリックイベント
+ * UIを選択モードに切り替える
  */
-generateBtn.addEventListener('click', async () => {
-  try {
-    // ボタンを無効化
-    generateBtn.disabled = true;
-    showStatus('ページを解析中...', 'loading');
+function activateSelectionMode() {
+  selectBtn.style.display = 'none';
+  cancelBtn.style.display = 'block';
+  showStatus('ページ上の要素をクリックしてください', 'active-mode');
+}
 
+/**
+ * UIを通常モードに戻す
+ */
+function deactivateSelectionMode() {
+  selectBtn.style.display = 'block';
+  cancelBtn.style.display = 'none';
+  showStatus('');
+}
+
+/**
+ * 「要素を選択」ボタンのクリックイベント
+ */
+selectBtn.addEventListener('click', async () => {
+  try {
     // アクティブなタブを取得
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
@@ -36,30 +51,55 @@ generateBtn.addEventListener('click', async () => {
       throw new Error('アクティブなタブが見つかりません');
     }
 
-    // content scriptにメッセージを送信してページ内容を取得
-    const response = await chrome.tabs.sendMessage(tab.id, {
-      action: 'getPageContent'
+    // content scriptに選択モード開始のメッセージを送信
+    await chrome.tabs.sendMessage(tab.id, {
+      action: 'startSelection'
     });
 
-    if (!response || !response.success) {
-      throw new Error(response?.error || 'ページ内容の取得に失敗しました');
+    // UIを選択モードに切り替え
+    activateSelectionMode();
+
+  } catch (error) {
+    console.error('エラー:', error);
+    showStatus('エラー: ' + error.message, 'error');
+  }
+});
+
+/**
+ * 「選択をキャンセル」ボタンのクリックイベント
+ */
+cancelBtn.addEventListener('click', async () => {
+  try {
+    // アクティブなタブを取得
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+    if (!tab || !tab.id) {
+      throw new Error('アクティブなタブが見つかりません');
     }
 
-    showStatus('仕様書を生成中...', 'loading');
-
-    // 取得したコンテンツをbackground scriptに送信して処理
-    const result = await chrome.runtime.sendMessage({
-      action: 'generateSpec',
-      data: response.data
+    // content scriptに選択キャンセルのメッセージを送信
+    await chrome.tabs.sendMessage(tab.id, {
+      action: 'cancelSelection'
     });
 
-    if (!result || !result.success) {
-      throw new Error(result?.error || '仕様書の生成に失敗しました');
-    }
+    // UIを通常モードに戻す
+    deactivateSelectionMode();
 
-    showStatus('完了しました！', 'success');
+  } catch (error) {
+    console.error('エラー:', error);
+    showStatus('エラー: ' + error.message, 'error');
+  }
+});
 
-    // 結果を表示する新しいタブを開く
+/**
+ * background scriptからのメッセージを受信
+ * 要素が選択されたときに通知を受け取る
+ */
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === 'elementSelected') {
+    // 要素が選択されたら、図解ページを開く
+    showStatus('図解を生成中...', 'loading');
+
     chrome.tabs.create({
       url: chrome.runtime.getURL('result.html')
     });
@@ -69,9 +109,7 @@ generateBtn.addEventListener('click', async () => {
       window.close();
     }, 500);
 
-  } catch (error) {
-    console.error('エラー:', error);
-    showStatus('エラー: ' + error.message, 'error');
-    generateBtn.disabled = false;
+    sendResponse({ success: true });
+    return true;
   }
 });
