@@ -8,27 +8,42 @@
  * @param {Object} contentInfo - コンテンツ情報
  */
 async function displayContentInfo(contentInfo) {
-  console.log('Content Info:', contentInfo);
+  console.log('📊 Content Info:', contentInfo);
+  console.log('📊 初期カード数:', contentInfo.cards?.length || 0);
 
   // ローディングメッセージを更新
   document.getElementById('loading').querySelector('p').textContent = '図解を生成しています...';
+
+  // カードがない場合、見出しと段落から自動生成
+  if (!contentInfo.cards || contentInfo.cards.length === 0) {
+    console.log('⚠️ カードが0個 → 自動生成します');
+    contentInfo.cards = generateCardsFromContent(contentInfo);
+    console.log('📦 自動生成されたカード:', contentInfo.cards);
+  }
 
   // Google AI APIが有効かチェック
   const settings = await new Promise(resolve => {
     chrome.storage.sync.get(['enableAI', 'geminiApiKey'], resolve);
   });
 
+  console.log('🔧 AI設定:', { enableAI: settings.enableAI, hasApiKey: !!settings.geminiApiKey });
+
   if (settings.enableAI && settings.geminiApiKey) {
     // AI要約を試みる
     document.getElementById('loading').querySelector('p').textContent = 'AIが内容を要約しています...';
+    console.log('🤖 AI要約を開始...');
     try {
       await generateAISummary(contentInfo, settings.geminiApiKey);
-      console.log('AI要約成功:', contentInfo.cards);
+      console.log('✅ AI要約成功 - 新しいカード数:', contentInfo.cards?.length);
+      console.log('📄 AIカード内容:', contentInfo.cards);
     } catch (error) {
-      console.error('AI要約失敗:', error);
+      console.error('❌ AI要約失敗:', error);
+      console.log('📋 フォールバック: 自動生成カードを使用');
       // エラーの場合は通常の図解を表示
       document.getElementById('loading').querySelector('p').textContent = '通常の図解を表示しています...';
     }
+  } else {
+    console.log('⚠️ AI無効 - 自動生成カードを使用');
   }
 
   // ページタイトル
@@ -63,12 +78,93 @@ async function displayContentInfo(contentInfo) {
   document.getElementById('content').style.display = 'block';
 
   // デバッグ情報をコンソールに出力
-  console.log('表示完了:', {
+  console.log('✅ 表示完了:', {
     cards: contentInfo.cards?.length,
     headings: contentInfo.headings?.length,
     paragraphs: contentInfo.paragraphs?.length,
     sections: contentInfo.sections?.length
   });
+}
+
+/**
+ * 見出しと段落からカードを自動生成
+ * @param {Object} contentInfo - コンテンツ情報
+ * @returns {Array} - 生成されたカード
+ */
+function generateCardsFromContent(contentInfo) {
+  const cards = [];
+
+  // 見出しからカードを生成（最大3つ）
+  if (contentInfo.headings && contentInfo.headings.length > 0) {
+    const topHeadings = contentInfo.headings.slice(0, 3);
+    topHeadings.forEach(heading => {
+      // この見出しに続く段落を探す
+      const relatedParagraphs = contentInfo.paragraphs?.slice(0, 3) || [];
+      const text = relatedParagraphs[0]?.text || heading.text;
+
+      // 数値や重要情報を抽出
+      const highlights = extractHighlightsFromText(text);
+
+      cards.push({
+        heading: heading.text,
+        text: text.length > 80 ? text.substring(0, 80) + '...' : text,
+        highlights: highlights
+      });
+    });
+  }
+
+  // 見出しが少ない場合、段落から追加
+  if (cards.length < 3 && contentInfo.paragraphs && contentInfo.paragraphs.length > 0) {
+    const remainingSlots = 3 - cards.length;
+    const paragraphs = contentInfo.paragraphs.slice(0, remainingSlots);
+
+    paragraphs.forEach(para => {
+      const text = para.text;
+      const highlights = extractHighlightsFromText(text);
+
+      cards.push({
+        heading: text.length > 30 ? text.substring(0, 30) + '...' : text,
+        text: text.length > 80 ? text.substring(0, 80) + '...' : text,
+        highlights: highlights
+      });
+    });
+  }
+
+  return cards.slice(0, 3); // 最大3つ
+}
+
+/**
+ * テキストから重要な情報（数値、金額、日付など）を抽出
+ */
+function extractHighlightsFromText(text) {
+  const highlights = [];
+
+  // 金額（円、ドル、ユーロなど）
+  const moneyPattern = /([0-9,]+(?:\.[0-9]+)?)\s*(円|ドル|€|USD|JPY|万円|億円)/g;
+  let match;
+  while ((match = moneyPattern.exec(text)) !== null) {
+    highlights.push({ type: 'money', value: match[0] });
+  }
+
+  // パーセンテージ
+  const percentPattern = /[0-9]+(?:\.[0-9]+)?%/g;
+  while ((match = percentPattern.exec(text)) !== null) {
+    highlights.push({ type: 'percent', value: match[0] });
+  }
+
+  // 日付・期間
+  const datePattern = /[0-9]{4}年[0-9]{1,2}月|[0-9]{1,2}月[0-9]{1,2}日|[0-9]+年間|[0-9]+ヶ月|[0-9]+日間/g;
+  while ((match = datePattern.exec(text)) !== null) {
+    highlights.push({ type: 'date', value: match[0] });
+  }
+
+  // 大きな数値
+  const numberPattern = /[0-9,]+(?:万|億|千|兆)/g;
+  while ((match = numberPattern.exec(text)) !== null) {
+    highlights.push({ type: 'number', value: match[0] });
+  }
+
+  return highlights.slice(0, 2); // 最大2つ
 }
 
 /**
