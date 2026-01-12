@@ -1,32 +1,41 @@
 /**
  * result.js
- * 役割: 選択された要素のHTML・CSS情報を視覚的に図解表示
+ * 役割: 抽出したコンテンツ情報を視覚的に図解表示
  */
 
 /**
- * 要素情報を表示
- * @param {Object} elementInfo - 要素情報
+ * コンテンツ情報を表示
+ * @param {Object} contentInfo - コンテンツ情報
  */
-function displayElementInfo(elementInfo) {
-  console.log('Element Info:', elementInfo);
+function displayContentInfo(contentInfo) {
+  console.log('Content Info:', contentInfo);
 
-  // ヘッダー情報
-  displayHeader(elementInfo);
+  // ページタイトル
+  displayPageTitle(contentInfo.pageTitle);
 
-  // ボックスモデル
-  displayBoxModel(elementInfo.boxModel);
+  // カード（主要ポイント）
+  displayCards(contentInfo.cards);
 
-  // テキストコンテンツ
-  displayTextContent(elementInfo.textContent);
+  // 見出し構造
+  displayHeadings(contentInfo.headings);
 
-  // HTML 階層構造
-  displayHierarchy(elementInfo.hierarchy, elementInfo.htmlInfo);
+  // セクション
+  displaySections(contentInfo.sections);
 
-  // Flexbox/Grid レイアウト
-  displayLayout(elementInfo.cssProperties);
+  // 段落
+  displayParagraphs(contentInfo.paragraphs);
 
-  // CSS プロパティ
-  displayCSSProperties(elementInfo.cssProperties);
+  // リスト
+  displayLists(contentInfo.lists);
+
+  // キーワード
+  displayKeywords(contentInfo.keywords);
+
+  // 画像
+  displayImages(contentInfo.images);
+
+  // テーブル
+  displayTables(contentInfo.tables);
 
   // ローディングを非表示、コンテンツを表示
   document.getElementById('loading').style.display = 'none';
@@ -34,423 +43,231 @@ function displayElementInfo(elementInfo) {
 }
 
 /**
- * ヘッダー情報を表示
- * @param {Object} elementInfo - 要素情報
+ * ページタイトルを表示
  */
-function displayHeader(elementInfo) {
-  const { htmlInfo, selectorPath } = elementInfo;
-
-  document.getElementById('elementTag').textContent = `<${htmlInfo.tagName}>`;
-  document.getElementById('selectorPath').textContent = selectorPath;
-}
-
-/**
- * ボックスモデルを表示
- * @param {Object} boxModel - ボックスモデル情報
- */
-function displayBoxModel(boxModel) {
-  const container = document.getElementById('boxModelContainer');
-
-  // ボックスモデルのネスト構造を作成
-  const boxHTML = `
-    <div class="box-model">
-      <div class="box-layer margin-box">
-        <div class="box-label margin-label">Margin</div>
-        <div class="box-values">
-          ${boxModel.margin.top}px ${boxModel.margin.right}px ${boxModel.margin.bottom}px ${boxModel.margin.left}px
-        </div>
-        <div class="box-layer border-box">
-          <div class="box-label border-label">Border</div>
-          <div class="box-values">
-            ${boxModel.border.top}px ${boxModel.border.right}px ${boxModel.border.bottom}px ${boxModel.border.left}px
-          </div>
-          <div class="box-layer padding-box">
-            <div class="box-label padding-label">Padding</div>
-            <div class="box-values">
-              ${boxModel.padding.top}px ${boxModel.padding.right}px ${boxModel.padding.bottom}px ${boxModel.padding.left}px
-            </div>
-            <div class="box-layer content-box">
-              <div class="box-label content-label">Content</div>
-              <div>${Math.round(boxModel.width)}px × ${Math.round(boxModel.height)}px</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-
-  container.innerHTML = boxHTML;
-
-  // サイズ情報カード
-  displaySizeInfo(boxModel);
-}
-
-/**
- * サイズ情報を表示
- * @param {Object} boxModel - ボックスモデル情報
- */
-function displaySizeInfo(boxModel) {
-  const sizeInfoContainer = document.getElementById('sizeInfo');
-
-  const totalWidth = boxModel.width + boxModel.padding.left + boxModel.padding.right +
-                     boxModel.border.left + boxModel.border.right +
-                     boxModel.margin.left + boxModel.margin.right;
-
-  const totalHeight = boxModel.height + boxModel.padding.top + boxModel.padding.bottom +
-                      boxModel.border.top + boxModel.border.bottom +
-                      boxModel.margin.top + boxModel.margin.bottom;
-
-  const sizeCards = [
-    { title: 'コンテンツ幅', value: `${Math.round(boxModel.width)}px` },
-    { title: 'コンテンツ高さ', value: `${Math.round(boxModel.height)}px` },
-    { title: '合計幅', value: `${Math.round(totalWidth)}px` },
-    { title: '合計高さ', value: `${Math.round(totalHeight)}px` }
-  ];
-
-  const html = sizeCards.map(card => `
-    <div class="size-card">
-      <div class="size-card-title">${card.title}</div>
-      <div class="size-card-value">${card.value}</div>
-    </div>
-  `).join('');
-
-  sizeInfoContainer.innerHTML = html;
-}
-
-/**
- * テキストコンテンツを表示
- * @param {string} textContent - テキスト内容
- */
-function displayTextContent(textContent) {
-  const section = document.getElementById('textContentSection');
-  const container = document.getElementById('textContent');
-
-  if (!textContent || textContent.trim() === '') {
-    section.style.display = 'none';
-    return;
+function displayPageTitle(pageTitle) {
+  if (pageTitle) {
+    document.getElementById('pageTitle').textContent = pageTitle;
   }
-
-  container.textContent = textContent;
 }
 
 /**
- * HTML 階層構造を表示
- * @param {Object} hierarchy - 階層情報
- * @param {Object} currentElement - 現在の要素情報
+ * カード（主要ポイント）を表示
  */
-function displayHierarchy(hierarchy, currentElement) {
-  const container = document.getElementById('hierarchyContainer');
+function displayCards(cards) {
+  const section = document.getElementById('cardsSection');
+  const container = document.getElementById('cardsGrid');
 
-  let html = '';
-
-  // 親要素
-  if (hierarchy.parent) {
-    html += `
-      <div class="hierarchy-section">
-        <div class="hierarchy-title">⬆️ 親要素</div>
-        ${renderElementCard(hierarchy.parent, false)}
-      </div>
-    `;
-  }
-
-  // 現在の要素
-  html += `
-    <div class="hierarchy-section">
-      <div class="hierarchy-title">🎯 選択中の要素</div>
-      ${renderElementCard(currentElement, true)}
-    </div>
-  `;
-
-  // 子要素
-  if (hierarchy.children && hierarchy.children.length > 0) {
-    html += `
-      <div class="hierarchy-section">
-        <div class="hierarchy-title">⬇️ 子要素 (${hierarchy.children.length}個)</div>
-        <div class="children-grid">
-          ${hierarchy.children.map(child => renderElementCard(child, false)).join('')}
-        </div>
-      </div>
-    `;
-  }
-
-  // 兄弟要素
-  if (hierarchy.siblings && hierarchy.siblings.length > 0) {
-    html += `
-      <div class="hierarchy-section">
-        <div class="hierarchy-title">↔️ 兄弟要素 (${hierarchy.siblings.length}個)</div>
-        <div class="children-grid">
-          ${hierarchy.siblings.slice(0, 6).map(sibling => renderElementCard(sibling, false)).join('')}
-        </div>
-        ${hierarchy.siblings.length > 6 ? `<div class="empty-message">...他 ${hierarchy.siblings.length - 6} 個</div>` : ''}
-      </div>
-    `;
-  }
-
-  container.innerHTML = html;
-}
-
-/**
- * 要素カードをレンダリング
- * @param {Object} element - 要素情報
- * @param {boolean} isCurrent - 現在の要素かどうか
- * @returns {string} HTML文字列
- */
-function renderElementCard(element, isCurrent) {
-  const classAttr = isCurrent ? 'element-card current' : 'element-card';
-  const idText = element.id ? `<span class="element-id">#${element.id}</span>` : '';
-  const classesText = element.classes && element.classes.length > 0
-    ? `<span class="element-classes">.${element.classes.join('.')}</span>`
-    : '';
-  const textPreview = element.textContent
-    ? `<div class="element-text">${escapeHtml(element.textContent)}</div>`
-    : '';
-
-  return `
-    <div class="${classAttr}">
-      <div class="element-info">
-        <span class="element-tag-small">&lt;${element.tagName}&gt;</span>
-        ${idText}
-        ${classesText}
-      </div>
-      ${textPreview}
-    </div>
-  `;
-}
-
-/**
- * Flexbox/Grid レイアウトを表示
- * @param {Object} cssProperties - CSSプロパティ
- */
-function displayLayout(cssProperties) {
-  const section = document.getElementById('layoutSection');
-  const titleElement = document.getElementById('layoutTitle');
-  const container = document.getElementById('layoutVisualization');
-
-  const isFlexbox = cssProperties.display === 'flex' || cssProperties.display === 'inline-flex';
-  const isGrid = cssProperties.display === 'grid' || cssProperties.display === 'inline-grid';
-
-  if (!isFlexbox && !isGrid) {
+  if (!cards || cards.length === 0) {
     section.style.display = 'none';
     return;
   }
 
   section.style.display = 'block';
 
-  if (isFlexbox) {
-    titleElement.textContent = '📐 Flexbox レイアウト';
-    displayFlexboxLayout(cssProperties, container);
-  } else if (isGrid) {
-    titleElement.textContent = '📊 Grid レイアウト';
-    displayGridLayout(cssProperties, container);
+  const html = cards.map(card => `
+    <div class="card">
+      ${card.heading ? `<div class="card-heading">${escapeHtml(card.heading)}</div>` : ''}
+      <div class="card-text">${escapeHtml(card.text)}</div>
+    </div>
+  `).join('');
+
+  container.innerHTML = html;
+}
+
+/**
+ * 見出し構造を表示
+ */
+function displayHeadings(headings) {
+  const section = document.getElementById('headingsSection');
+  const container = document.getElementById('headingsTree');
+
+  if (!headings || headings.length === 0) {
+    section.style.display = 'none';
+    return;
   }
-}
 
-/**
- * Flexbox レイアウト詳細を表示
- * @param {Object} cssProperties - CSSプロパティ
- * @param {HTMLElement} container - コンテナ要素
- */
-function displayFlexboxLayout(cssProperties, container) {
-  const flexProperties = [
-    { name: 'flex-direction', value: cssProperties.flexDirection },
-    { name: 'flex-wrap', value: cssProperties.flexWrap },
-    { name: 'justify-content', value: cssProperties.justifyContent },
-    { name: 'align-items', value: cssProperties.alignItems },
-    { name: 'align-content', value: cssProperties.alignContent },
-    { name: 'flex', value: cssProperties.flex },
-    { name: 'flex-grow', value: cssProperties.flexGrow },
-    { name: 'flex-shrink', value: cssProperties.flexShrink },
-    { name: 'flex-basis', value: cssProperties.flexBasis },
-    { name: 'order', value: cssProperties.order }
-  ];
+  section.style.display = 'block';
 
-  const html = `
-    <div class="layout-info">
-      ${flexProperties.map(prop => `
-        <div class="layout-property">
-          <div class="layout-property-name">${prop.name}</div>
-          <div class="layout-property-value">${prop.value}</div>
-        </div>
-      `).join('')}
+  const html = headings.map(heading => `
+    <div class="heading-item level-${heading.level}">
+      ${escapeHtml(heading.text)}
     </div>
-  `;
+  `).join('');
 
   container.innerHTML = html;
 }
 
 /**
- * Grid レイアウト詳細を表示
- * @param {Object} cssProperties - CSSプロパティ
- * @param {HTMLElement} container - コンテナ要素
+ * セクションを表示
  */
-function displayGridLayout(cssProperties, container) {
-  const gridProperties = [
-    { name: 'grid-template-columns', value: cssProperties.gridTemplateColumns },
-    { name: 'grid-template-rows', value: cssProperties.gridTemplateRows },
-    { name: 'grid-gap', value: cssProperties.gridGap },
-    { name: 'grid-column', value: cssProperties.gridColumn },
-    { name: 'grid-row', value: cssProperties.gridRow }
-  ];
+function displaySections(sections) {
+  const section = document.getElementById('sectionsSection');
+  const container = document.getElementById('sectionsContainer');
 
-  const html = `
-    <div class="layout-info">
-      ${gridProperties.map(prop => `
-        <div class="layout-property">
-          <div class="layout-property-name">${prop.name}</div>
-          <div class="layout-property-value">${prop.value}</div>
-        </div>
-      `).join('')}
+  if (!sections || sections.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+
+  section.style.display = 'block';
+
+  const html = sections.map(sec => `
+    <div class="section-card">
+      ${sec.heading ? `<div class="section-card-heading">${escapeHtml(sec.heading)}</div>` : ''}
+      <div class="section-card-text">${escapeHtml(sec.text)}</div>
     </div>
-  `;
+  `).join('');
 
   container.innerHTML = html;
 }
 
 /**
- * CSS プロパティをカテゴリ別に表示
- * @param {Object} cssProperties - CSSプロパティ
+ * 段落を表示
  */
-function displayCSSProperties(cssProperties) {
-  const container = document.getElementById('cssProperties');
+function displayParagraphs(paragraphs) {
+  const section = document.getElementById('paragraphsSection');
+  const container = document.getElementById('paragraphsContainer');
 
-  // カテゴリ定義
-  const categories = [
-    {
-      name: 'レイアウト',
-      className: 'layout',
-      properties: {
-        display: cssProperties.display,
-        position: cssProperties.position,
-        float: cssProperties.float,
-        clear: cssProperties.clear,
-        'z-index': cssProperties.zIndex,
-        overflow: cssProperties.overflow,
-        'overflow-x': cssProperties.overflowX,
-        'overflow-y': cssProperties.overflowY
-      }
-    },
-    {
-      name: 'サイズ',
-      className: 'sizing',
-      properties: {
-        width: cssProperties.width,
-        height: cssProperties.height,
-        'min-width': cssProperties.minWidth,
-        'min-height': cssProperties.minHeight,
-        'max-width': cssProperties.maxWidth,
-        'max-height': cssProperties.maxHeight,
-        'box-sizing': cssProperties.boxSizing
-      }
-    },
-    {
-      name: '配置',
-      className: 'layout',
-      properties: {
-        top: cssProperties.top,
-        right: cssProperties.right,
-        bottom: cssProperties.bottom,
-        left: cssProperties.left
-      }
-    },
-    {
-      name: 'テキスト',
-      className: 'text',
-      properties: {
-        color: cssProperties.color,
-        'font-size': cssProperties.fontSize,
-        'font-family': cssProperties.fontFamily,
-        'font-weight': cssProperties.fontWeight,
-        'font-style': cssProperties.fontStyle,
-        'line-height': cssProperties.lineHeight,
-        'text-align': cssProperties.textAlign,
-        'text-decoration': cssProperties.textDecoration,
-        'text-transform': cssProperties.textTransform,
-        'letter-spacing': cssProperties.letterSpacing,
-        'word-spacing': cssProperties.wordSpacing
-      }
-    },
-    {
-      name: '背景',
-      className: 'background',
-      properties: {
-        'background-color': cssProperties.backgroundColor,
-        'background-image': cssProperties.backgroundImage,
-        'background-size': cssProperties.backgroundSize,
-        'background-position': cssProperties.backgroundPosition,
-        'background-repeat': cssProperties.backgroundRepeat
-      }
-    },
-    {
-      name: 'ボーダー',
-      className: 'border',
-      properties: {
-        'border-style': cssProperties.borderStyle,
-        'border-color': cssProperties.borderColor,
-        'border-radius': cssProperties.borderRadius,
-        'border-top-left-radius': cssProperties.borderTopLeftRadius,
-        'border-top-right-radius': cssProperties.borderTopRightRadius,
-        'border-bottom-left-radius': cssProperties.borderBottomLeftRadius,
-        'border-bottom-right-radius': cssProperties.borderBottomRightRadius
-      }
-    },
-    {
-      name: 'エフェクト',
-      className: 'effects',
-      properties: {
-        opacity: cssProperties.opacity,
-        'box-shadow': cssProperties.boxShadow,
-        'text-shadow': cssProperties.textShadow,
-        transform: cssProperties.transform,
-        transition: cssProperties.transition,
-        animation: cssProperties.animation,
-        filter: cssProperties.filter
-      }
-    },
-    {
-      name: 'その他',
-      className: 'layout',
-      properties: {
-        cursor: cssProperties.cursor,
-        'pointer-events': cssProperties.pointerEvents,
-        visibility: cssProperties.visibility
-      }
-    }
-  ];
+  if (!paragraphs || paragraphs.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
 
-  const html = categories.map(category => {
-    // 有効なプロパティのみフィルタリング
-    const validProperties = Object.entries(category.properties)
-      .filter(([_, value]) => value && value !== 'none' && value !== 'normal' && value !== 'auto');
+  section.style.display = 'block';
 
-    if (validProperties.length === 0) return '';
+  const html = paragraphs.slice(0, 10).map((para, index) => `
+    <div class="paragraph">
+      <span class="paragraph-number">${index + 1}</span>
+      ${escapeHtml(para.text)}
+    </div>
+  `).join('');
+
+  container.innerHTML = html;
+}
+
+/**
+ * リストを表示
+ */
+function displayLists(lists) {
+  const section = document.getElementById('listsSection');
+  const container = document.getElementById('listsContainer');
+
+  if (!lists || lists.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+
+  section.style.display = 'block';
+
+  const html = lists.map((list, index) => {
+    const tag = list.type === 'ol' ? 'ol' : 'ul';
+    const items = list.items.map(item => `<li>${escapeHtml(item)}</li>`).join('');
 
     return `
-      <div class="property-category ${category.className}">
-        <div class="category-title">${category.name}</div>
-        ${validProperties.map(([name, value]) => `
-          <div class="property-row">
-            <span class="property-name">${name}</span>
-            <span class="property-value">${truncateValue(value)}</span>
-          </div>
-        `).join('')}
+      <div class="list-box">
+        <${tag}>
+          ${items}
+        </${tag}>
       </div>
     `;
-  }).filter(html => html !== '').join('');
+  }).join('');
 
   container.innerHTML = html;
 }
 
 /**
- * 値を切り詰める（長すぎる値の省略）
- * @param {string} value - 値
- * @returns {string} 切り詰められた値
+ * キーワードを表示
  */
-function truncateValue(value) {
-  const maxLength = 50;
-  if (value.length > maxLength) {
-    return value.substring(0, maxLength) + '...';
+function displayKeywords(keywords) {
+  const section = document.getElementById('keywordsSection');
+  const container = document.getElementById('keywordsGrid');
+
+  if (!keywords || keywords.length === 0) {
+    section.style.display = 'none';
+    return;
   }
-  return value;
+
+  section.style.display = 'block';
+
+  const html = keywords.map(kw => `
+    <div class="keyword">
+      ${escapeHtml(kw.word)}
+      <span class="keyword-count">${kw.count}</span>
+    </div>
+  `).join('');
+
+  container.innerHTML = html;
+}
+
+/**
+ * 画像を表示
+ */
+function displayImages(images) {
+  const section = document.getElementById('imagesSection');
+  const container = document.getElementById('imagesGrid');
+
+  if (!images || images.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+
+  section.style.display = 'block';
+
+  const html = images.map(img => `
+    <div class="image-card">
+      <img src="${escapeHtml(img.src)}" alt="${escapeHtml(img.alt)}" loading="lazy">
+      ${img.alt ? `<div class="image-alt">${escapeHtml(img.alt)}</div>` : ''}
+    </div>
+  `).join('');
+
+  container.innerHTML = html;
+}
+
+/**
+ * テーブルを表示
+ */
+function displayTables(tables) {
+  const section = document.getElementById('tablesSection');
+  const container = document.getElementById('tablesContainer');
+
+  if (!tables || tables.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+
+  section.style.display = 'block';
+
+  const html = tables.map((table, index) => {
+    let tableHtml = `<div class="table-container"><table class="data-table">`;
+
+    // ヘッダー行
+    if (table.headers && table.headers.length > 0) {
+      tableHtml += '<thead><tr>';
+      table.headers.forEach(header => {
+        tableHtml += `<th>${escapeHtml(header)}</th>`;
+      });
+      tableHtml += '</tr></thead>';
+    }
+
+    // データ行
+    if (table.rows && table.rows.length > 0) {
+      tableHtml += '<tbody>';
+      table.rows.forEach(row => {
+        tableHtml += '<tr>';
+        row.forEach(cell => {
+          tableHtml += `<td>${escapeHtml(cell)}</td>`;
+        });
+        tableHtml += '</tr>';
+      });
+      tableHtml += '</tbody>';
+    }
+
+    tableHtml += '</table></div>';
+    return tableHtml;
+  }).join('');
+
+  container.innerHTML = html;
 }
 
 /**
@@ -459,42 +276,59 @@ function truncateValue(value) {
  * @returns {string} エスケープされたテキスト
  */
 function escapeHtml(text) {
+  if (!text) return '';
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
 }
 
 /**
- * すべての情報をテキストでコピー
- * @param {Object} elementInfo - 要素情報
+ * コンテンツ情報をテキストでコピー
+ * @param {Object} contentInfo - コンテンツ情報
  * @returns {string} コピー用テキスト
  */
-function getInfoText(elementInfo) {
+function getContentText(contentInfo) {
   let text = '='.repeat(60) + '\n';
-  text += 'HTML・CSS 図解\n';
+  text += 'コンテンツ図解\n';
   text += '='.repeat(60) + '\n\n';
 
-  text += `要素: <${elementInfo.htmlInfo.tagName}>\n`;
-  text += `セレクタ: ${elementInfo.selectorPath}\n\n`;
-
-  text += '--- ボックスモデル ---\n';
-  text += `Content: ${Math.round(elementInfo.boxModel.width)}px × ${Math.round(elementInfo.boxModel.height)}px\n`;
-  text += `Padding: ${elementInfo.boxModel.padding.top}px ${elementInfo.boxModel.padding.right}px ${elementInfo.boxModel.padding.bottom}px ${elementInfo.boxModel.padding.left}px\n`;
-  text += `Border: ${elementInfo.boxModel.border.top}px ${elementInfo.boxModel.border.right}px ${elementInfo.boxModel.border.bottom}px ${elementInfo.boxModel.border.left}px\n`;
-  text += `Margin: ${elementInfo.boxModel.margin.top}px ${elementInfo.boxModel.margin.right}px ${elementInfo.boxModel.margin.bottom}px ${elementInfo.boxModel.margin.left}px\n\n`;
-
-  if (elementInfo.textContent) {
-    text += '--- テキスト内容 ---\n';
-    text += elementInfo.textContent + '\n\n';
+  if (contentInfo.pageTitle) {
+    text += `ページタイトル: ${contentInfo.pageTitle}\n\n`;
   }
 
-  text += '--- 主要CSSプロパティ ---\n';
-  text += `display: ${elementInfo.cssProperties.display}\n`;
-  text += `position: ${elementInfo.cssProperties.position}\n`;
-  text += `width: ${elementInfo.cssProperties.width}\n`;
-  text += `height: ${elementInfo.cssProperties.height}\n`;
-  text += `color: ${elementInfo.cssProperties.color}\n`;
-  text += `background-color: ${elementInfo.cssProperties.backgroundColor}\n`;
+  // 見出し
+  if (contentInfo.headings && contentInfo.headings.length > 0) {
+    text += '--- 見出し構造 ---\n';
+    contentInfo.headings.forEach(heading => {
+      const indent = '  '.repeat(heading.level - 1);
+      text += `${indent}${heading.text}\n`;
+    });
+    text += '\n';
+  }
+
+  // カード
+  if (contentInfo.cards && contentInfo.cards.length > 0) {
+    text += '--- 主要ポイント ---\n';
+    contentInfo.cards.forEach((card, index) => {
+      text += `[${index + 1}] ${card.heading || ''}\n`;
+      text += `${card.text}\n\n`;
+    });
+  }
+
+  // 段落
+  if (contentInfo.paragraphs && contentInfo.paragraphs.length > 0) {
+    text += '--- 段落 ---\n';
+    contentInfo.paragraphs.slice(0, 5).forEach((para, index) => {
+      text += `[${index + 1}] ${para.text}\n\n`;
+    });
+  }
+
+  // キーワード
+  if (contentInfo.keywords && contentInfo.keywords.length > 0) {
+    text += '--- 重要キーワード ---\n';
+    text += contentInfo.keywords.map(kw => `${kw.word} (${kw.count}回)`).join(', ');
+    text += '\n\n';
+  }
 
   return text;
 }
@@ -503,7 +337,7 @@ function getInfoText(elementInfo) {
  * ページ読み込み時の初期化処理
  */
 document.addEventListener('DOMContentLoaded', () => {
-  // chrome.storage.localから最新の要素情報を取得
+  // chrome.storage.localから最新のコンテンツ情報を取得
   chrome.storage.local.get(['latestElementInfo'], (result) => {
     if (chrome.runtime.lastError) {
       console.error('ストレージ読み込みエラー:', chrome.runtime.lastError);
@@ -514,16 +348,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!result.latestElementInfo) {
       document.getElementById('loading').innerHTML =
-        '<p>エラー: 要素情報が見つかりません</p>';
+        '<p>エラー: コンテンツ情報が見つかりません</p>';
       return;
     }
 
-    // 要素情報を表示
-    displayElementInfo(result.latestElementInfo);
+    // コンテンツ情報を表示
+    displayContentInfo(result.latestElementInfo);
 
     // コピーボタンのイベントリスナー
     document.getElementById('copyBtn').addEventListener('click', () => {
-      const text = getInfoText(result.latestElementInfo);
+      const text = getContentText(result.latestElementInfo);
       navigator.clipboard.writeText(text).then(() => {
         const btn = document.getElementById('copyBtn');
         const originalText = btn.textContent;

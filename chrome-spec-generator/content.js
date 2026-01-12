@@ -74,208 +74,319 @@ function hideHighlight() {
 }
 
 /**
- * 要素の詳細情報を取得（HTML・CSS図解用）
+ * 要素のコンテンツ情報を取得（内容図解用）
  * @param {HTMLElement} element - 情報を取得する要素
- * @returns {Object} 要素の詳細情報
+ * @returns {Object} 要素の内容情報
  */
 function getElementInfo(element) {
-  // Computed Styleを取得
-  const computedStyle = window.getComputedStyle(element);
-  const rect = element.getBoundingClientRect();
+  // ページタイトルを取得
+  const pageTitle = document.title || '';
 
-  // ボックスモデル情報
-  const boxModel = {
-    width: rect.width,
-    height: rect.height,
-    margin: {
-      top: parseFloat(computedStyle.marginTop),
-      right: parseFloat(computedStyle.marginRight),
-      bottom: parseFloat(computedStyle.marginBottom),
-      left: parseFloat(computedStyle.marginLeft)
-    },
-    border: {
-      top: parseFloat(computedStyle.borderTopWidth),
-      right: parseFloat(computedStyle.borderRightWidth),
-      bottom: parseFloat(computedStyle.borderBottomWidth),
-      left: parseFloat(computedStyle.borderLeftWidth)
-    },
-    padding: {
-      top: parseFloat(computedStyle.paddingTop),
-      right: parseFloat(computedStyle.paddingRight),
-      bottom: parseFloat(computedStyle.paddingBottom),
-      left: parseFloat(computedStyle.paddingLeft)
-    }
-  };
+  // 見出し構造を取得
+  const headings = extractHeadings(element);
 
-  // 全てのCSSプロパティを取得（カテゴリ分け用）
-  const cssProperties = {
-    // レイアウト
-    display: computedStyle.display,
-    position: computedStyle.position,
-    float: computedStyle.float,
-    clear: computedStyle.clear,
-    zIndex: computedStyle.zIndex,
-    overflow: computedStyle.overflow,
-    overflowX: computedStyle.overflowX,
-    overflowY: computedStyle.overflowY,
+  // 段落を取得
+  const paragraphs = extractParagraphs(element);
 
-    // Flexbox
-    flexDirection: computedStyle.flexDirection,
-    flexWrap: computedStyle.flexWrap,
-    justifyContent: computedStyle.justifyContent,
-    alignItems: computedStyle.alignItems,
-    alignContent: computedStyle.alignContent,
-    flex: computedStyle.flex,
-    flexGrow: computedStyle.flexGrow,
-    flexShrink: computedStyle.flexShrink,
-    flexBasis: computedStyle.flexBasis,
-    order: computedStyle.order,
+  // リストを取得
+  const lists = extractLists(element);
 
-    // Grid
-    gridTemplateColumns: computedStyle.gridTemplateColumns,
-    gridTemplateRows: computedStyle.gridTemplateRows,
-    gridGap: computedStyle.gridGap,
-    gridColumn: computedStyle.gridColumn,
-    gridRow: computedStyle.gridRow,
+  // 画像を取得
+  const images = extractImages(element);
 
-    // サイズ
-    width: computedStyle.width,
-    height: computedStyle.height,
-    minWidth: computedStyle.minWidth,
-    minHeight: computedStyle.minHeight,
-    maxWidth: computedStyle.maxWidth,
-    maxHeight: computedStyle.maxHeight,
-    boxSizing: computedStyle.boxSizing,
+  // リンクを取得
+  const links = extractLinks(element);
 
-    // 配置
-    top: computedStyle.top,
-    right: computedStyle.right,
-    bottom: computedStyle.bottom,
-    left: computedStyle.left,
+  // 重要なキーワードを抽出
+  const keywords = extractKeywords(element);
 
-    // テキスト
-    color: computedStyle.color,
-    fontSize: computedStyle.fontSize,
-    fontFamily: computedStyle.fontFamily,
-    fontWeight: computedStyle.fontWeight,
-    fontStyle: computedStyle.fontStyle,
-    lineHeight: computedStyle.lineHeight,
-    textAlign: computedStyle.textAlign,
-    textDecoration: computedStyle.textDecoration,
-    textTransform: computedStyle.textTransform,
-    letterSpacing: computedStyle.letterSpacing,
-    wordSpacing: computedStyle.wordSpacing,
+  // カード・ボックス要素を検出（視覚的に重要な要素）
+  const cards = extractCards(element);
 
-    // 背景
-    backgroundColor: computedStyle.backgroundColor,
-    backgroundImage: computedStyle.backgroundImage,
-    backgroundSize: computedStyle.backgroundSize,
-    backgroundPosition: computedStyle.backgroundPosition,
-    backgroundRepeat: computedStyle.backgroundRepeat,
+  // テーブルデータを取得
+  const tables = extractTables(element);
 
-    // ボーダー
-    borderStyle: computedStyle.borderStyle,
-    borderColor: computedStyle.borderColor,
-    borderRadius: computedStyle.borderRadius,
-    borderTopLeftRadius: computedStyle.borderTopLeftRadius,
-    borderTopRightRadius: computedStyle.borderTopRightRadius,
-    borderBottomLeftRadius: computedStyle.borderBottomLeftRadius,
-    borderBottomRightRadius: computedStyle.borderBottomRightRadius,
-
-    // エフェクト
-    opacity: computedStyle.opacity,
-    boxShadow: computedStyle.boxShadow,
-    textShadow: computedStyle.textShadow,
-    transform: computedStyle.transform,
-    transition: computedStyle.transition,
-    animation: computedStyle.animation,
-    filter: computedStyle.filter,
-
-    // その他
-    cursor: computedStyle.cursor,
-    pointerEvents: computedStyle.pointerEvents,
-    visibility: computedStyle.visibility,
-  };
-
-  // HTML情報
-  const htmlInfo = {
-    tagName: element.tagName.toLowerCase(),
-    id: element.id || '',
-    classes: Array.from(element.classList),
-    attributes: Array.from(element.attributes).map(attr => ({
-      name: attr.name,
-      value: attr.value
-    }))
-  };
-
-  // セレクタパス
-  const selectorPath = generateSelectorPath(element);
-
-  // 階層情報（親と子）
-  const hierarchy = {
-    parent: element.parentElement ? getSimpleElementInfo(element.parentElement) : null,
-    children: Array.from(element.children).slice(0, 20).map(child => getSimpleElementInfo(child)),
-    siblings: element.parentElement ?
-      Array.from(element.parentElement.children)
-        .filter(el => el !== element)
-        .slice(0, 10)
-        .map(sib => getSimpleElementInfo(sib)) : []
-  };
-
-  // テキスト内容（短縮版）
-  const textContent = element.textContent.trim().substring(0, 200);
+  // セクション情報
+  const sections = extractSections(element);
 
   return {
-    boxModel,
-    cssProperties,
-    htmlInfo,
-    selectorPath,
-    hierarchy,
-    textContent
+    pageTitle,
+    headings,
+    paragraphs,
+    lists,
+    images,
+    links,
+    keywords,
+    cards,
+    tables,
+    sections,
+    elementTag: element.tagName.toLowerCase(),
+    elementText: element.textContent.trim().substring(0, 300)
   };
 }
 
 /**
- * 簡易要素情報を取得（階層表示用）
+ * 見出しを抽出
  */
-function getSimpleElementInfo(element) {
-  return {
-    tagName: element.tagName.toLowerCase(),
-    id: element.id || '',
-    classes: Array.from(element.classList),
-    textContent: element.textContent.trim().substring(0, 50)
-  };
-}
+function extractHeadings(element) {
+  const headings = [];
+  const headingTags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
 
-/**
- * 要素のセレクタパスを生成
- * @param {HTMLElement} element - 対象要素
- * @returns {string} CSSセレクタパス
- */
-function generateSelectorPath(element) {
-  const path = [];
-  let current = element;
-
-  while (current && current !== document.body) {
-    let selector = current.tagName.toLowerCase();
-
-    if (current.id) {
-      selector += `#${current.id}`;
-      path.unshift(selector);
-      break;
-    } else if (current.className) {
-      const classes = Array.from(current.classList).join('.');
-      if (classes) {
-        selector += `.${classes}`;
+  headingTags.forEach(tag => {
+    const elements = element.querySelectorAll(tag);
+    elements.forEach((el, index) => {
+      const text = el.textContent.trim();
+      if (text) {
+        headings.push({
+          level: parseInt(tag.charAt(1)),
+          text: text,
+          tag: tag
+        });
       }
-    }
+    });
+  });
 
-    path.unshift(selector);
-    current = current.parentElement;
+  // 選択要素自体が見出しの場合も含める
+  if (headingTags.includes(element.tagName.toLowerCase())) {
+    const text = element.textContent.trim();
+    if (text) {
+      headings.unshift({
+        level: parseInt(element.tagName.charAt(1)),
+        text: text,
+        tag: element.tagName.toLowerCase()
+      });
+    }
   }
 
-  return path.join(' > ');
+  return headings.slice(0, 30); // 最大30個
 }
+
+/**
+ * 段落を抽出
+ */
+function extractParagraphs(element) {
+  const paragraphs = [];
+  const pElements = element.querySelectorAll('p');
+
+  pElements.forEach((p, index) => {
+    const text = p.textContent.trim();
+    if (text && text.length > 10) {
+      paragraphs.push({
+        text: text,
+        length: text.length
+      });
+    }
+  });
+
+  // 選択要素自体がpタグの場合
+  if (element.tagName.toLowerCase() === 'p') {
+    const text = element.textContent.trim();
+    if (text && text.length > 10) {
+      paragraphs.unshift({ text, length: text.length });
+    }
+  }
+
+  return paragraphs.slice(0, 20); // 最大20個
+}
+
+/**
+ * リストを抽出
+ */
+function extractLists(element) {
+  const lists = [];
+  const listElements = element.querySelectorAll('ul, ol');
+
+  listElements.forEach((list, index) => {
+    const items = Array.from(list.children)
+      .filter(li => li.tagName.toLowerCase() === 'li')
+      .map(li => li.textContent.trim())
+      .filter(text => text);
+
+    if (items.length > 0) {
+      lists.push({
+        type: list.tagName.toLowerCase(),
+        items: items.slice(0, 10)
+      });
+    }
+  });
+
+  return lists.slice(0, 10);
+}
+
+/**
+ * 画像を抽出
+ */
+function extractImages(element) {
+  const images = [];
+  const imgElements = element.querySelectorAll('img');
+
+  imgElements.forEach((img, index) => {
+    const src = img.src || '';
+    const alt = img.alt || '';
+    if (src) {
+      images.push({
+        src: src,
+        alt: alt,
+        width: img.naturalWidth || img.width,
+        height: img.naturalHeight || img.height
+      });
+    }
+  });
+
+  return images.slice(0, 15);
+}
+
+/**
+ * リンクを抽出
+ */
+function extractLinks(element) {
+  const links = [];
+  const aElements = element.querySelectorAll('a[href]');
+
+  aElements.forEach((a, index) => {
+    const href = a.href;
+    const text = a.textContent.trim();
+    if (href && text) {
+      links.push({
+        url: href,
+        text: text
+      });
+    }
+  });
+
+  return links.slice(0, 20);
+}
+
+/**
+ * キーワードを抽出（頻出単語）
+ */
+function extractKeywords(element) {
+  const text = element.textContent || '';
+  const words = text
+    .toLowerCase()
+    .replace(/[^\w\sぁ-んァ-ヶー一-龠]/g, ' ')
+    .split(/\s+/)
+    .filter(word => word.length > 2);
+
+  // 単語の出現回数をカウント
+  const wordCount = {};
+  words.forEach(word => {
+    wordCount[word] = (wordCount[word] || 0) + 1;
+  });
+
+  // 頻出単語を抽出（ストップワードを除外）
+  const stopWords = new Set(['the', 'and', 'for', 'are', 'but', 'not', 'you', 'with', 'this', 'that', 'から', 'まで', 'など', 'として', 'について', 'により', 'による']);
+
+  const keywords = Object.entries(wordCount)
+    .filter(([word, count]) => count >= 2 && !stopWords.has(word))
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 15)
+    .map(([word, count]) => ({ word, count }));
+
+  return keywords;
+}
+
+/**
+ * カード・ボックス要素を検出
+ */
+function extractCards(element) {
+  const cards = [];
+
+  // カード的な要素を検出（div, article, sectionなど）
+  const cardSelectors = [
+    '[class*="card"]',
+    '[class*="box"]',
+    '[class*="item"]',
+    '[class*="panel"]',
+    'article',
+    '[class*="feature"]'
+  ];
+
+  cardSelectors.forEach(selector => {
+    try {
+      const elements = element.querySelectorAll(selector);
+      elements.forEach((el, index) => {
+        // 既に追加されていないかチェック
+        if (cards.some(card => card.element === el)) return;
+        if (cards.length >= 10) return;
+
+        const heading = el.querySelector('h1, h2, h3, h4, h5, h6');
+        const headingText = heading ? heading.textContent.trim() : '';
+        const text = el.textContent.trim().substring(0, 150);
+
+        if (text.length > 20) {
+          cards.push({
+            element: el,
+            heading: headingText,
+            text: text,
+            selector: selector
+          });
+        }
+      });
+    } catch (e) {
+      // セレクタエラーを無視
+    }
+  });
+
+  return cards.slice(0, 10).map(card => ({
+    heading: card.heading,
+    text: card.text
+  }));
+}
+
+/**
+ * テーブルを抽出
+ */
+function extractTables(element) {
+  const tables = [];
+  const tableElements = element.querySelectorAll('table');
+
+  tableElements.forEach((table, index) => {
+    const headers = Array.from(table.querySelectorAll('th'))
+      .map(th => th.textContent.trim());
+
+    const rows = Array.from(table.querySelectorAll('tr'))
+      .slice(0, 5)
+      .map(tr => {
+        return Array.from(tr.querySelectorAll('td'))
+          .map(td => td.textContent.trim());
+      })
+      .filter(row => row.length > 0);
+
+    if (headers.length > 0 || rows.length > 0) {
+      tables.push({
+        headers: headers,
+        rows: rows
+      });
+    }
+  });
+
+  return tables.slice(0, 5);
+}
+
+/**
+ * セクション構造を抽出
+ */
+function extractSections(element) {
+  const sections = [];
+  const sectionElements = element.querySelectorAll('section, article, [class*="section"]');
+
+  sectionElements.forEach((section, index) => {
+    const heading = section.querySelector('h1, h2, h3, h4, h5, h6');
+    const headingText = heading ? heading.textContent.trim() : '';
+    const text = section.textContent.trim().substring(0, 200);
+
+    if (headingText || text.length > 30) {
+      sections.push({
+        heading: headingText,
+        text: text
+      });
+    }
+  });
+
+  return sections.slice(0, 10);
+}
+
 
 /**
  * マウスオーバーイベントハンドラ
