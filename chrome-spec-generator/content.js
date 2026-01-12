@@ -631,8 +631,23 @@ async function handleClick(event) {
  * 右クリックドラッグ開始
  */
 function handleMouseDown(event) {
-  if (!isSelectionMode) return;
-  if (event.button !== 2) return; // 右クリックのみ
+  console.log('🔍 handleMouseDown called', {
+    button: event.button,
+    isSelectionMode: isSelectionMode,
+    eventType: event.type
+  });
+
+  if (!isSelectionMode) {
+    console.log('❌ isSelectionMode is false, exiting');
+    return;
+  }
+
+  if (event.button !== 2) {
+    console.log('❌ Button is not right-click (2), button:', event.button);
+    return;
+  }
+
+  console.log('✅ Right-click drag starting!', { x: event.clientX, y: event.clientY });
 
   event.preventDefault();
   event.stopPropagation();
@@ -648,6 +663,8 @@ function handleMouseDown(event) {
   box.style.height = '0px';
   box.style.display = 'block';
 
+  console.log('📦 Drag selection box created');
+
   // 通常のハイライトを非表示
   hideHighlight();
 }
@@ -656,7 +673,13 @@ function handleMouseDown(event) {
  * ドラッグ中の処理
  */
 function handleMouseMove(event) {
-  if (!isSelectionMode || !isDragging) return;
+  if (!isSelectionMode || !isDragging) {
+    // Avoid spamming logs - only log first few times
+    if (Math.random() < 0.01) {
+      console.log('handleMouseMove: not in drag mode', { isSelectionMode, isDragging });
+    }
+    return;
+  }
 
   event.preventDefault();
 
@@ -679,8 +702,21 @@ function handleMouseMove(event) {
  * ドラッグ終了
  */
 async function handleMouseUp(event) {
-  if (!isSelectionMode || !isDragging) return;
-  if (event.button !== 2) return;
+  console.log('🔍 handleMouseUp called', {
+    button: event.button,
+    isSelectionMode: isSelectionMode,
+    isDragging: isDragging
+  });
+
+  if (!isSelectionMode || !isDragging) {
+    console.log('❌ Not in selection/drag mode, exiting');
+    return;
+  }
+
+  if (event.button !== 2) {
+    console.log('❌ Button is not right-click (2), button:', event.button);
+    return;
+  }
 
   event.preventDefault();
   event.stopPropagation();
@@ -692,13 +728,16 @@ async function handleMouseUp(event) {
   const width = Math.abs(endX - dragStartX);
   const height = Math.abs(endY - dragStartY);
 
+  console.log('📏 Drag size:', { width, height });
+
   if (width < 10 || height < 10) {
+    console.log('❌ Drag too small, ignoring');
     isDragging = false;
     removeDragSelectionBox();
     return;
   }
 
-  console.log('コンテンツ図解ツール: 範囲選択完了', { dragStartX, dragStartY, endX, endY });
+  console.log('✅ コンテンツ図解ツール: 範囲選択完了', { dragStartX, dragStartY, endX, endY });
 
   // 範囲内の要素を取得
   const elementsInRange = getElementsInRange(dragStartX, dragStartY, endX, endY);
@@ -739,6 +778,7 @@ function handleContextMenu(event) {
  * 選択モードを開始
  */
 function startSelectionMode() {
+  console.log('🚀 Starting selection mode');
   isSelectionMode = true;
 
   // 通常のクリック選択
@@ -746,10 +786,13 @@ function startSelectionMode() {
   document.addEventListener('click', handleClick, { capture: true, passive: false });
 
   // 右クリックドラッグ選択
+  console.log('📌 Attaching drag event listeners (mousedown, mousemove, mouseup, contextmenu)');
   document.addEventListener('mousedown', handleMouseDown, { capture: true, passive: false });
   document.addEventListener('mousemove', handleMouseMove, { capture: true, passive: false });
   document.addEventListener('mouseup', handleMouseUp, { capture: true, passive: false });
   document.addEventListener('contextmenu', handleContextMenu, { capture: true, passive: false });
+
+  console.log('✅ Selection mode active - isSelectionMode:', isSelectionMode);
 
   document.body.style.cursor = 'crosshair';
   createHighlightOverlay();
