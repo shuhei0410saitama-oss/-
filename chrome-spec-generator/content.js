@@ -143,23 +143,42 @@ function getElementsInRange(x1, y1, x2, y2) {
  * 範囲内の要素から仮想的なコンテナを作成
  */
 function createVirtualContainer(elements) {
+  console.log('仮想コンテナ作成:', elements.length, '個の要素');
+
   // すべての要素のテキストを結合
   const allText = elements.map(el => el.textContent).join('\n');
 
   // 仮想的なコンテナオブジェクトを作成
-  return {
+  const container = {
     querySelectorAll: (selector) => {
       const results = [];
       elements.forEach(el => {
-        const found = el.querySelectorAll(selector);
-        results.push(...Array.from(found));
+        try {
+          // 要素自身がセレクタにマッチするかチェック
+          if (el.matches && el.matches(selector)) {
+            results.push(el);
+          }
+          // 子要素を検索
+          const found = el.querySelectorAll(selector);
+          results.push(...Array.from(found));
+        } catch (e) {
+          // セレクタエラーを無視
+          console.warn('querySelectorAll エラー:', selector, e);
+        }
       });
       return results;
     },
     textContent: allText,
-    tagName: 'DIV',
-    toLowerCase: () => 'div'
+    tagName: 'VIRTUAL',
+    toLowerCase: () => 'virtual'
   };
+
+  // tagName.toLowerCase()メソッドを追加
+  container.tagName = {
+    toLowerCase: () => 'virtual'
+  };
+
+  return container;
 }
 
 /**
@@ -198,7 +217,19 @@ function getElementInfo(element) {
   // セクション情報
   const sections = extractSections(element);
 
-  return {
+  // elementTagを安全に取得
+  let elementTag = 'unknown';
+  try {
+    if (typeof element.tagName === 'string') {
+      elementTag = element.tagName.toLowerCase();
+    } else if (element.tagName && typeof element.tagName.toLowerCase === 'function') {
+      elementTag = element.tagName.toLowerCase();
+    }
+  } catch (e) {
+    console.warn('elementTag取得エラー:', e);
+  }
+
+  const result = {
     pageTitle,
     headings,
     paragraphs,
@@ -209,9 +240,18 @@ function getElementInfo(element) {
     cards,
     tables,
     sections,
-    elementTag: element.tagName.toLowerCase(),
+    elementTag,
     elementText: element.textContent.trim().substring(0, 300)
   };
+
+  console.log('getElementInfo完了:', {
+    cards: cards.length,
+    headings: headings.length,
+    paragraphs: paragraphs.length,
+    textLength: element.textContent.length
+  });
+
+  return result;
 }
 
 /**
@@ -235,16 +275,22 @@ function extractHeadings(element) {
     });
   });
 
-  // 選択要素自体が見出しの場合も含める
-  if (headingTags.includes(element.tagName.toLowerCase())) {
-    const text = element.textContent.trim();
-    if (text) {
-      headings.unshift({
-        level: parseInt(element.tagName.charAt(1)),
-        text: text,
-        tag: element.tagName.toLowerCase()
-      });
+  // 選択要素自体が見出しの場合も含める（仮想コンテナではスキップ）
+  try {
+    const tagName = typeof element.tagName === 'string' ? element.tagName.toLowerCase() :
+                    (element.tagName && typeof element.tagName.toLowerCase === 'function' ? element.tagName.toLowerCase() : '');
+    if (tagName && headingTags.includes(tagName)) {
+      const text = element.textContent.trim();
+      if (text) {
+        headings.unshift({
+          level: parseInt(tagName.charAt(1)),
+          text: text,
+          tag: tagName
+        });
+      }
     }
+  } catch (e) {
+    console.warn('見出し自身チェックエラー:', e);
   }
 
   return headings.slice(0, 30); // 最大30個
@@ -267,12 +313,18 @@ function extractParagraphs(element) {
     }
   });
 
-  // 選択要素自体がpタグの場合
-  if (element.tagName.toLowerCase() === 'p') {
-    const text = element.textContent.trim();
-    if (text && text.length > 10) {
-      paragraphs.unshift({ text, length: text.length });
+  // 選択要素自体がpタグの場合（仮想コンテナではスキップ）
+  try {
+    const tagName = typeof element.tagName === 'string' ? element.tagName.toLowerCase() :
+                    (element.tagName && typeof element.tagName.toLowerCase === 'function' ? element.tagName.toLowerCase() : '');
+    if (tagName === 'p') {
+      const text = element.textContent.trim();
+      if (text && text.length > 10) {
+        paragraphs.unshift({ text, length: text.length });
+      }
     }
+  } catch (e) {
+    console.warn('段落自身チェックエラー:', e);
   }
 
   return paragraphs.slice(0, 20); // 最大20個

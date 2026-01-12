@@ -10,6 +10,9 @@
 async function displayContentInfo(contentInfo) {
   console.log('Content Info:', contentInfo);
 
+  // ローディングメッセージを更新
+  document.getElementById('loading').querySelector('p').textContent = '図解を生成しています...';
+
   // Google AI APIが有効かチェック
   const settings = await new Promise(resolve => {
     chrome.storage.sync.get(['enableAI', 'geminiApiKey'], resolve);
@@ -17,11 +20,14 @@ async function displayContentInfo(contentInfo) {
 
   if (settings.enableAI && settings.geminiApiKey) {
     // AI要約を試みる
+    document.getElementById('loading').querySelector('p').textContent = 'AIが内容を要約しています...';
     try {
       await generateAISummary(contentInfo, settings.geminiApiKey);
+      console.log('AI要約成功:', contentInfo.cards);
     } catch (error) {
       console.error('AI要約失敗:', error);
       // エラーの場合は通常の図解を表示
+      document.getElementById('loading').querySelector('p').textContent = '通常の図解を表示しています...';
     }
   }
 
@@ -55,6 +61,14 @@ async function displayContentInfo(contentInfo) {
   // ローディングを非表示、コンテンツを表示
   document.getElementById('loading').style.display = 'none';
   document.getElementById('content').style.display = 'block';
+
+  // デバッグ情報をコンソールに出力
+  console.log('表示完了:', {
+    cards: contentInfo.cards?.length,
+    headings: contentInfo.headings?.length,
+    paragraphs: contentInfo.paragraphs?.length,
+    sections: contentInfo.sections?.length
+  });
 }
 
 /**
