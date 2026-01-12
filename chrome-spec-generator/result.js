@@ -65,12 +65,24 @@ function displayCards(cards) {
 
   section.style.display = 'block';
 
-  const html = cards.map(card => `
-    <div class="card">
-      ${card.heading ? `<div class="card-heading">${escapeHtml(card.heading)}</div>` : ''}
-      <div class="card-text">${escapeHtml(card.text)}</div>
-    </div>
-  `).join('');
+  const html = cards.map(card => {
+    // highlightsがある場合は大きく表示
+    const highlightHTML = card.highlights && card.highlights.length > 0
+      ? card.highlights.map(h => `<div class="card-highlight">${escapeHtml(h.value)}</div>`).join('')
+      : '';
+
+    // テキストは最初の50文字まで（簡潔に）
+    const shortText = card.text.length > 50 ? card.text.substring(0, 50) + '...' : card.text;
+
+    return `
+      <div class="card">
+        ${card.heading ? `<div class="card-label">${escapeHtml(card.heading)}</div>` : ''}
+        ${highlightHTML}
+        ${!highlightHTML && card.heading ? `<div class="card-heading">${escapeHtml(card.heading)}</div>` : ''}
+        <div class="card-text">${escapeHtml(shortText)}</div>
+      </div>
+    `;
+  }).join('');
 
   container.innerHTML = html;
 }
@@ -89,7 +101,8 @@ function displayHeadings(headings) {
 
   section.style.display = 'block';
 
-  const html = headings.map(heading => `
+  // 最大10個まで表示（簡潔に）
+  const html = headings.slice(0, 10).map(heading => `
     <div class="heading-item level-${heading.level}">
       ${escapeHtml(heading.text)}
     </div>
@@ -136,12 +149,18 @@ function displayParagraphs(paragraphs) {
 
   section.style.display = 'block';
 
-  const html = paragraphs.slice(0, 10).map((para, index) => `
-    <div class="paragraph">
-      <span class="paragraph-number">${index + 1}</span>
-      ${escapeHtml(para.text)}
-    </div>
-  `).join('');
+  const html = paragraphs.slice(0, 5).map((para, index) => {
+    // 最初の1-2文だけを抽出（簡潔に）
+    const sentences = para.text.match(/[^。！？\.\!\?]+[。！？\.\!\?]/g) || [para.text];
+    const shortText = sentences.slice(0, 2).join('');
+
+    return `
+      <div class="paragraph">
+        <span class="paragraph-number">${index + 1}</span>
+        ${escapeHtml(shortText)}
+      </div>
+    `;
+  }).join('');
 
   container.innerHTML = html;
 }

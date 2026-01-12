@@ -312,13 +312,20 @@ function extractCards(element) {
 
         const heading = el.querySelector('h1, h2, h3, h4, h5, h6');
         const headingText = heading ? heading.textContent.trim() : '';
-        const text = el.textContent.trim().substring(0, 150);
+        const text = el.textContent.trim();
+
+        // 最初の100文字だけを取得（短く簡潔に）
+        const shortText = text.substring(0, 100);
+
+        // 数値や重要情報を抽出
+        const highlights = extractHighlightsFromText(text);
 
         if (text.length > 20) {
           cards.push({
             element: el,
             heading: headingText,
-            text: text,
+            text: shortText,
+            highlights: highlights,
             selector: selector
           });
         }
@@ -330,8 +337,55 @@ function extractCards(element) {
 
   return cards.slice(0, 10).map(card => ({
     heading: card.heading,
-    text: card.text
+    text: card.text,
+    highlights: card.highlights
   }));
+}
+
+/**
+ * テキストから重要な数値や情報を抽出
+ */
+function extractHighlightsFromText(text) {
+  const highlights = [];
+
+  // 金額を検出（円、万円、億円など）
+  const moneyRegex = /([0-9,]+(?:\.[0-9]+)?)\s*(?:円|万円|億円|ドル|USD|JPY)/g;
+  let match;
+  while ((match = moneyRegex.exec(text)) !== null) {
+    highlights.push({
+      type: 'money',
+      value: match[0]
+    });
+  }
+
+  // パーセンテージを検出
+  const percentRegex = /([0-9.]+)\s*(?:%|パーセント|percent)/g;
+  while ((match = percentRegex.exec(text)) !== null) {
+    highlights.push({
+      type: 'percent',
+      value: match[0]
+    });
+  }
+
+  // 年数・期間を検出
+  const periodRegex = /([0-9]+)\s*(?:年|ヶ月|か月|日|週間|days|months|years)/g;
+  while ((match = periodRegex.exec(text)) !== null) {
+    highlights.push({
+      type: 'period',
+      value: match[0]
+    });
+  }
+
+  // 「無期限」「恒久化」などの重要キーワード
+  const keywordRegex = /(無期限|恒久化|永久|無制限|最大|最小|最高|最低|新規|改正)/g;
+  while ((match = keywordRegex.exec(text)) !== null) {
+    highlights.push({
+      type: 'keyword',
+      value: match[0]
+    });
+  }
+
+  return highlights.slice(0, 3); // 最大3つまで
 }
 
 /**
