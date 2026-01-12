@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "コンテンツ図解ツール",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Webページの内容を選択して、要点や構造を分かりやすく図解します",
 
   "permissions": [

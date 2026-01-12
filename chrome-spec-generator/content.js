@@ -628,11 +628,12 @@ async function handleClick(event) {
 }
 
 /**
- * 右クリックドラッグ開始
+ * Shift+ドラッグ開始（右クリックの代わり）
  */
 function handleMouseDown(event) {
   console.log('🔍 handleMouseDown called', {
     button: event.button,
+    shiftKey: event.shiftKey,
     isSelectionMode: isSelectionMode,
     eventType: event.type
   });
@@ -642,12 +643,13 @@ function handleMouseDown(event) {
     return;
   }
 
-  if (event.button !== 2) {
-    console.log('❌ Button is not right-click (2), button:', event.button);
+  // 左クリック(0) + Shiftキー で範囲選択
+  if (event.button !== 0 || !event.shiftKey) {
+    console.log('❌ Not Shift+Left-click, button:', event.button, 'shift:', event.shiftKey);
     return;
   }
 
-  console.log('✅ Right-click drag starting!', { x: event.clientX, y: event.clientY });
+  console.log('✅ Shift+drag starting!', { x: event.clientX, y: event.clientY });
 
   event.preventDefault();
   event.stopPropagation();
@@ -713,8 +715,9 @@ async function handleMouseUp(event) {
     return;
   }
 
-  if (event.button !== 2) {
-    console.log('❌ Button is not right-click (2), button:', event.button);
+  // 左クリック(0)のみ受け付ける
+  if (event.button !== 0) {
+    console.log('❌ Button is not left-click (0), button:', event.button);
     return;
   }
 
@@ -785,19 +788,18 @@ function startSelectionMode() {
   document.addEventListener('mouseover', handleMouseOver, { capture: true, passive: false });
   document.addEventListener('click', handleClick, { capture: true, passive: false });
 
-  // 右クリックドラッグ選択
-  console.log('📌 Attaching drag event listeners (mousedown, mousemove, mouseup, contextmenu)');
+  // Shift+ドラッグ選択
+  console.log('📌 Attaching drag event listeners (mousedown, mousemove, mouseup)');
   document.addEventListener('mousedown', handleMouseDown, { capture: true, passive: false });
   document.addEventListener('mousemove', handleMouseMove, { capture: true, passive: false });
   document.addEventListener('mouseup', handleMouseUp, { capture: true, passive: false });
-  document.addEventListener('contextmenu', handleContextMenu, { capture: true, passive: false });
 
   console.log('✅ Selection mode active - isSelectionMode:', isSelectionMode);
 
   document.body.style.cursor = 'crosshair';
   createHighlightOverlay();
 
-  console.log('コンテンツ図解ツール: 選択モード開始（クリック or 右クリックドラッグ）');
+  console.log('コンテンツ図解ツール: 選択モード開始（クリック or Shift+ドラッグ）');
 }
 
 /**
@@ -815,7 +817,6 @@ function stopSelectionMode() {
   document.removeEventListener('mousedown', handleMouseDown, true);
   document.removeEventListener('mousemove', handleMouseMove, true);
   document.removeEventListener('mouseup', handleMouseUp, true);
-  document.removeEventListener('contextmenu', handleContextMenu, true);
 
   document.body.style.cursor = '';
   removeHighlightOverlay();
