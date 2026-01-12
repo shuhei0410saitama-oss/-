@@ -11,6 +11,12 @@ let isSelectionMode = false;
 let highlightedElement = null;
 let highlightOverlay = null;
 
+// 範囲選択用の変数
+let isDragging = false;
+let dragStartX = 0;
+let dragStartY = 0;
+let dragSelectionBox = null;
+
 /**
  * ハイライトオーバーレイを作成
  */
@@ -71,6 +77,89 @@ function hideHighlight() {
     highlightOverlay.style.display = 'none';
   }
   highlightedElement = null;
+}
+
+/**
+ * 範囲選択ボックスを作成
+ */
+function createDragSelectionBox() {
+  if (dragSelectionBox) return dragSelectionBox;
+
+  const box = document.createElement('div');
+  box.id = 'drag-selection-box';
+  box.style.cssText = `
+    position: absolute;
+    pointer-events: none;
+    z-index: 2147483646;
+    background-color: rgba(102, 126, 234, 0.2);
+    border: 2px dashed #667eea;
+    box-sizing: border-box;
+    display: none;
+  `;
+  document.body.appendChild(box);
+  dragSelectionBox = box;
+  return box;
+}
+
+/**
+ * 範囲選択ボックスを削除
+ */
+function removeDragSelectionBox() {
+  if (dragSelectionBox && dragSelectionBox.parentNode) {
+    dragSelectionBox.parentNode.removeChild(dragSelectionBox);
+    dragSelectionBox = null;
+  }
+}
+
+/**
+ * 範囲内の要素を取得
+ */
+function getElementsInRange(x1, y1, x2, y2) {
+  const minX = Math.min(x1, x2);
+  const maxX = Math.max(x1, x2);
+  const minY = Math.min(y1, y2);
+  const maxY = Math.max(y1, y2);
+
+  // 範囲内のすべての要素を取得
+  const allElements = document.querySelectorAll('*');
+  const elementsInRange = [];
+
+  allElements.forEach(element => {
+    const rect = element.getBoundingClientRect();
+    const elementCenterX = rect.left + rect.width / 2;
+    const elementCenterY = rect.top + rect.height / 2;
+
+    // 要素の中心が範囲内にあるかチェック
+    if (elementCenterX >= minX && elementCenterX <= maxX &&
+        elementCenterY >= minY && elementCenterY <= maxY) {
+      elementsInRange.push(element);
+    }
+  });
+
+  return elementsInRange;
+}
+
+/**
+ * 範囲内の要素から仮想的なコンテナを作成
+ */
+function createVirtualContainer(elements) {
+  // すべての要素のテキストを結合
+  const allText = elements.map(el => el.textContent).join('\n');
+
+  // 仮想的なコンテナオブジェクトを作成
+  return {
+    querySelectorAll: (selector) => {
+      const results = [];
+      elements.forEach(el => {
+        const found = el.querySelectorAll(selector);
+        results.push(...Array.from(found));
+      });
+      return results;
+    },
+    textContent: allText,
+    tagName: 'DIV',
+    toLowerCase: () => 'div'
+  };
 }
 
 /**
@@ -487,20 +576,133 @@ async function handleClick(event) {
 }
 
 /**
+ * 右クリックドラッグ開始
+ */
+function handleMouseDown(event) {
+  if (!isSelectionMode) return;
+  if (event.button !== 2) return; // 右クリックのみ
+
+  event.preventDefault();
+  event.stopPropagation();
+
+  isDragging = true;
+  dragStartX = event.clientX;
+  dragStartY = event.clientY;
+
+  const box = createDragSelectionBox();
+  box.style.left = `${dragStartX}px`;
+  box.style.top = `${dragStartY}px`;
+  box.style.width = '0px';
+  box.style.height = '0px';
+  box.style.display = 'block';
+
+  // 通常のハイライトを非表示
+  hideHighlight();
+}
+
+/**
+ * ドラッグ中の処理
+ */
+function handleMouseMove(event) {
+  if (!isSelectionMode || !isDragging) return;
+
+  event.preventDefault();
+
+  const currentX = event.clientX;
+  const currentY = event.clientY;
+
+  const box = dragSelectionBox;
+  const minX = Math.min(dragStartX, currentX);
+  const minY = Math.min(dragStartY, currentY);
+  const width = Math.abs(currentX - dragStartX);
+  const height = Math.abs(currentY - dragStartY);
+
+  box.style.left = `${minX}px`;
+  box.style.top = `${minY}px`;
+  box.style.width = `${width}px`;
+  box.style.height = `${height}px`;
+}
+
+/**
+ * ドラッグ終了
+ */
+async function handleMouseUp(event) {
+  if (!isSelectionMode || !isDragging) return;
+  if (event.button !== 2) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+
+  const endX = event.clientX;
+  const endY = event.clientY;
+
+  // 最小サイズチェック（10px未満は無視）
+  const width = Math.abs(endX - dragStartX);
+  const height = Math.abs(endY - dragStartY);
+
+  if (width < 10 || height < 10) {
+    isDragging = false;
+    removeDragSelectionBox();
+    return;
+  }
+
+  console.log('コンテンツ図解ツール: 範囲選択完了', { dragStartX, dragStartY, endX, endY });
+
+  // 範囲内の要素を取得
+  const elementsInRange = getElementsInRange(dragStartX, dragStartY, endX, endY);
+  console.log('選択された要素数:', elementsInRange.length);
+
+  // 仮想コンテナを作成
+  const virtualContainer = createVirtualContainer(elementsInRange);
+
+  // 選択モードを終了
+  isDragging = false;
+  stopSelectionMode();
+
+  // 要素の情報を取得
+  const elementInfo = getElementInfo(virtualContainer);
+
+  // background scriptに情報を送信
+  chrome.runtime.sendMessage({
+    action: 'saveElementInfo',
+    data: elementInfo
+  });
+
+  // popup.jsに要素が選択されたことを通知
+  chrome.runtime.sendMessage({
+    action: 'elementSelected'
+  });
+}
+
+/**
+ * コンテキストメニューを無効化
+ */
+function handleContextMenu(event) {
+  if (!isSelectionMode) return;
+  event.preventDefault();
+  event.stopPropagation();
+}
+
+/**
  * 選択モードを開始
  */
 function startSelectionMode() {
   isSelectionMode = true;
 
-  // キャプチャフェーズで最優先でイベントを捕捉
+  // 通常のクリック選択
   document.addEventListener('mouseover', handleMouseOver, { capture: true, passive: false });
   document.addEventListener('click', handleClick, { capture: true, passive: false });
-  document.addEventListener('mousedown', handleClick, { capture: true, passive: false });
+
+  // 右クリックドラッグ選択
+  document.addEventListener('mousedown', handleMouseDown, { capture: true, passive: false });
+  document.addEventListener('mousemove', handleMouseMove, { capture: true, passive: false });
+  document.addEventListener('mouseup', handleMouseUp, { capture: true, passive: false });
+  document.addEventListener('contextmenu', handleContextMenu, { capture: true, passive: false });
 
   document.body.style.cursor = 'crosshair';
   createHighlightOverlay();
 
-  console.log('コンテンツ図解ツール: 選択モード開始');
+  console.log('コンテンツ図解ツール: 選択モード開始（クリック or 右クリックドラッグ）');
 }
 
 /**
@@ -508,11 +710,21 @@ function startSelectionMode() {
  */
 function stopSelectionMode() {
   isSelectionMode = false;
+  isDragging = false;
+
+  // 通常選択のイベントリスナーを削除
   document.removeEventListener('mouseover', handleMouseOver, true);
   document.removeEventListener('click', handleClick, true);
-  document.removeEventListener('mousedown', handleClick, true);
+
+  // 範囲選択のイベントリスナーを削除
+  document.removeEventListener('mousedown', handleMouseDown, true);
+  document.removeEventListener('mousemove', handleMouseMove, true);
+  document.removeEventListener('mouseup', handleMouseUp, true);
+  document.removeEventListener('contextmenu', handleContextMenu, true);
+
   document.body.style.cursor = '';
   removeHighlightOverlay();
+  removeDragSelectionBox();
   hideHighlight();
 
   console.log('コンテンツ図解ツール: 選択モード終了');

@@ -9,6 +9,7 @@
 // DOM要素の取得
 const selectBtn = document.getElementById('selectBtn');
 const cancelBtn = document.getElementById('cancelBtn');
+const settingsBtn = document.getElementById('settingsBtn');
 const statusDiv = document.getElementById('status');
 
 /**
@@ -123,4 +124,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     sendResponse({ success: true });
     return true;
   }
+});
+
+/**
+ * 「設定」ボタンのクリックイベント
+ */
+settingsBtn.addEventListener('click', () => {
+  chrome.runtime.openOptionsPage();
 });

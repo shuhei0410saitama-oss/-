@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>設定 - コンテンツ図解ツール</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', 'Hiragino Kaku Gothic ProN', 'メイリオ', sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 40px 20px;
+      background-color: #f5f5f5;
+    }
+
+    .container {
+      background-color: white;
+      border-radius: 8px;
+      padding: 40px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 28px;
+    }
+
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+
+    .section {
+      margin-bottom: 30px;
+      padding: 20px;
+      background-color: #f9f9f9;
+      border-radius: 8px;
+      border-left: 4px solid #667eea;
+    }
+
+    .section h2 {
+      font-size: 18px;
+      color: #667eea;
+      margin-bottom: 15px;
+    }
+
+    .section p {
+      font-size: 14px;
+      color: #666;
+      line-height: 1.6;
+      margin-bottom: 15px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #333;
+      font-size: 14px;
+    }
+
+    input[type="text"], input[type="password"] {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: 'Courier New', monospace;
+      transition: border-color 0.3s;
+    }
+
+    input[type="text"]:focus, input[type="password"]:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+
+    button {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 6px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+
+    #saveBtn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      margin-right: 10px;
+    }
+
+    #testBtn {
+      background-color: #2ecc71;
+      color: white;
+    }
+
+    .status {
+      margin-top: 15px;
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 14px;
+      display: none;
+    }
+
+    .status.success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+      display: block;
+    }
+
+    .status.error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+      display: block;
+    }
+
+    .info-box {
+      background-color: #e3f2fd;
+      padding: 15px;
+      border-radius: 6px;
+      border-left: 4px solid #2196F3;
+      font-size: 13px;
+      color: #1565C0;
+      margin-top: 15px;
+    }
+
+    .info-box a {
+      color: #1565C0;
+      font-weight: 600;
+    }
+
+    code {
+      background-color: #f0f0f0;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>⚙️ 設定</h1>
+    <p class="subtitle">コンテンツ図解ツールの設定を変更できます</p>
+
+    <!-- Google AI API 設定 -->
+    <div class="section">
+      <h2>🤖 Google AI (Gemini) API 設定</h2>
+      <p>Google AI APIを使用すると、AIがページ内容を要約・図解してくれます。<br>
+      APIキーを設定しない場合は、通常の図解機能のみ使用できます。</p>
+
+      <div class="form-group">
+        <div class="checkbox-group">
+          <input type="checkbox" id="enableAI">
+          <label for="enableAI" style="margin-bottom: 0;">Google AI APIを使用する</label>
+        </div>
+      </div>
+
+      <div class="form-group" id="apiKeyGroup" style="display: none;">
+        <label for="apiKey">Google AI API Key</label>
+        <input type="password" id="apiKey" placeholder="AIza...">
+        <div class="info-box">
+          APIキーは <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a> で取得できます。<br>
+          無料枠: 月60回まで無料で使用可能
+        </div>
+      </div>
+
+      <button id="saveBtn">💾 保存</button>
+      <button id="testBtn">🧪 API接続テスト</button>
+
+      <div id="status" class="status"></div>
+    </div>
+
+    <!-- 使用方法 -->
+    <div class="section">
+      <h2>📖 使い方</h2>
+      <p><strong>1. 要素選択:</strong> 拡張機能アイコンをクリック→「要素を選択」</p>
+      <p><strong>2-A. クリック選択:</strong> マウスオーバーしてクリック</p>
+      <p><strong>2-B. 範囲選択:</strong> 右クリック押したままドラッグ</p>
+      <p><strong>3. 図解表示:</strong> 自動的に新しいタブで図解が表示されます</p>
+    </div>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

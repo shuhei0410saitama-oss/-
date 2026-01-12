@@ -99,6 +99,23 @@
       color: #FF9800;
       font-weight: bold;
     }
+
+    #settingsBtn {
+      width: 100%;
+      padding: 10px;
+      background-color: #9E9E9E;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 13px;
+      cursor: pointer;
+      margin-top: 15px;
+      transition: background-color 0.3s;
+    }
+
+    #settingsBtn:hover {
+      background-color: #757575;
+    }
   </style>
 </head>
 <body>
@@ -109,8 +126,9 @@
   <div class="instruction">
     <strong>使い方:</strong><br>
     1. 「要素を選択」をクリック<br>
-    2. ページ上の要素にマウスオーバー<br>
-    3. 図解したい部分（記事など）をクリック
+    2-A. クリック選択: 要素をマウスオーバー→クリック<br>
+    2-B. 範囲選択: 右クリック押したままドラッグ<br>
+    ※範囲選択で特定の部分だけを図解できます
   </div>
 
   <!-- 要素選択モード開始ボタン -->
@@ -121,6 +139,9 @@
 
   <!-- ステータス表示エリア -->
   <div id="status"></div>
+
+  <!-- 設定ボタン -->
+  <button id="settingsBtn">⚙️ 設定 (Google AI API)</button>
 
   <script src="popup.js"></script>
 </body>
