@@ -10,6 +10,8 @@
  * メッセージリスナー: content.jsからのメッセージを処理
  */
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  console.log('🔔 background.js: メッセージ受信', request.action);
+
   if (request.action === 'saveElementInfo') {
     try {
       const elementInfo = request.data;
@@ -29,13 +31,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         timestamp: new Date().toISOString()
       }, () => {
         if (chrome.runtime.lastError) {
-          console.error('ストレージ保存エラー:', chrome.runtime.lastError);
+          console.error('❌ ストレージ保存エラー:', chrome.runtime.lastError);
           sendResponse({
             success: false,
             error: chrome.runtime.lastError.message
           });
         } else {
-          console.log('要素情報を保存しました:', elementInfo);
+          console.log('✅ 要素情報を保存しました');
           sendResponse({
             success: true
           });
@@ -43,7 +45,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       });
 
     } catch (error) {
-      console.error('background.js エラー:', error);
+      console.error('❌ background.js エラー:', error);
       sendResponse({
         success: false,
         error: error.message
@@ -51,6 +53,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 
     // 非同期レスポンスのためtrueを返す
+    return true;
+  }
+
+  // 要素が選択されたら、result.htmlを開く
+  if (request.action === 'elementSelected') {
+    console.log('📄 result.htmlを開きます');
+    chrome.tabs.create({
+      url: chrome.runtime.getURL('result.html')
+    }, (tab) => {
+      console.log('✅ result.htmlを開きました。タブID:', tab.id);
+    });
+    sendResponse({ success: true });
     return true;
   }
 });
