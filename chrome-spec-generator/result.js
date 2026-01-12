@@ -7,8 +7,23 @@
  * コンテンツ情報を表示
  * @param {Object} contentInfo - コンテンツ情報
  */
-function displayContentInfo(contentInfo) {
+async function displayContentInfo(contentInfo) {
   console.log('Content Info:', contentInfo);
+
+  // Google AI APIが有効かチェック
+  const settings = await new Promise(resolve => {
+    chrome.storage.sync.get(['enableAI', 'geminiApiKey'], resolve);
+  });
+
+  if (settings.enableAI && settings.geminiApiKey) {
+    // AI要約を試みる
+    try {
+      await generateAISummary(contentInfo, settings.geminiApiKey);
+    } catch (error) {
+      console.error('AI要約失敗:', error);
+      // エラーの場合は通常の図解を表示
+    }
+  }
 
   // ページタイトル
   displayPageTitle(contentInfo.pageTitle);
@@ -350,6 +365,96 @@ function getContentText(contentInfo) {
   }
 
   return text;
+}
+
+/**
+ * Google AI (Gemini) APIを使ってコンテンツを要約
+ * @param {Object} contentInfo - コンテンツ情報
+ * @param {string} apiKey - Google AI APIキー
+ */
+async function generateAISummary(contentInfo, apiKey) {
+  // コンテンツをテキストに変換
+  let contentText = `ページタイトル: ${contentInfo.pageTitle}\n\n`;
+
+  if (contentInfo.headings && contentInfo.headings.length > 0) {
+    contentText += '見出し:\n';
+    contentInfo.headings.slice(0, 10).forEach(h => {
+      const indent = '  '.repeat(h.level - 1);
+      contentText += `${indent}- ${h.text}\n`;
+    });
+    contentText += '\n';
+  }
+
+  if (contentInfo.paragraphs && contentInfo.paragraphs.length > 0) {
+    contentText += '本文:\n';
+    contentInfo.paragraphs.slice(0, 5).forEach(p => {
+      contentText += `${p.text}\n\n`;
+    });
+  }
+
+  // Gemini APIにリクエスト
+  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+
+  const prompt = `以下のWebページの内容を分析し、重要なポイントを3つのカード形式で簡潔にまとめてください。
+各カードは「見出し」と「説明（50文字以内）」で構成してください。
+数値や期間などの重要情報があれば必ず含めてください。
+
+コンテンツ:
+${contentText}
+
+出力形式（JSONで返してください）:
+{
+  "cards": [
+    {"heading": "見出し1", "text": "説明1", "highlight": "重要な数値や情報"},
+    {"heading": "見出し2", "text": "説明2", "highlight": "重要な数値や情報"},
+    {"heading": "見出し3", "text": "説明3", "highlight": "重要な数値や情報"}
+  ]
+}`;
+
+  const requestBody = {
+    contents: [{
+      parts: [{ text: prompt }]
+    }],
+    generationConfig: {
+      temperature: 0.4,
+      maxOutputTokens: 1024
+    }
+  };
+
+  try {
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(requestBody)
+    });
+
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const aiResponse = data.candidates[0].content.parts[0].text;
+
+    // JSONを抽出（マークダウンコードブロックを除去）
+    const jsonMatch = aiResponse.match(/```json\n?([\s\S]*?)\n?```/) || aiResponse.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const aiSummary = JSON.parse(jsonMatch[1] || jsonMatch[0]);
+
+      // AI要約されたカードを元のカードに追加/上書き
+      if (aiSummary.cards && aiSummary.cards.length > 0) {
+        contentInfo.cards = aiSummary.cards.map(card => ({
+          heading: card.heading,
+          text: card.text,
+          highlights: card.highlight ? [{ type: 'keyword', value: card.highlight }] : []
+        }));
+      }
+    }
+  } catch (error) {
+    console.error('AI要約エラー:', error);
+    throw error;
+  }
 }
 
 /**
