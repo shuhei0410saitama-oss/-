@@ -23,10 +23,14 @@ async function displayContentInfo(contentInfo) {
 
   // Google AI APIが有効かチェック
   const settings = await new Promise(resolve => {
-    chrome.storage.sync.get(['enableAI', 'geminiApiKey'], resolve);
+    chrome.storage.sync.get(['enableAI', 'geminiApiKey', 'enableNanoBanana'], resolve);
   });
 
-  console.log('🔧 AI設定:', { enableAI: settings.enableAI, hasApiKey: !!settings.geminiApiKey });
+  console.log('🔧 AI設定:', {
+    enableAI: settings.enableAI,
+    hasApiKey: !!settings.geminiApiKey,
+    enableNanoBanana: settings.enableNanoBanana
+  });
 
   if (settings.enableAI && settings.geminiApiKey) {
     // AI要約を試みる
@@ -41,6 +45,18 @@ async function displayContentInfo(contentInfo) {
       console.log('📋 フォールバック: 自動生成カードを使用');
       // エラーの場合は通常の図解を表示
       document.getElementById('loading').querySelector('p').textContent = '通常の図解を表示しています...';
+    }
+
+    // Nano Bananaで画像生成
+    if (settings.enableNanoBanana) {
+      document.getElementById('loading').querySelector('p').textContent = '図解画像を生成しています...';
+      console.log('🎨 Nano Banana画像生成を開始...');
+      try {
+        await generateNanoBananaImage(contentInfo, settings.geminiApiKey);
+        console.log('✅ 画像生成成功');
+      } catch (error) {
+        console.error('❌ 画像生成失敗:', error);
+      }
     }
   } else {
     console.log('⚠️ AI無効 - 自動生成カードを使用');
@@ -475,6 +491,129 @@ function getContentText(contentInfo) {
   }
 
   return text;
+}
+
+/**
+ * Nano Banana (Gemini Image Generation) で図解画像を生成
+ * @param {Object} contentInfo - コンテンツ情報
+ * @param {string} apiKey - Google AI APIキー
+ */
+async function generateNanoBananaImage(contentInfo, apiKey) {
+  // カード情報から画像生成プロンプトを構築
+  let prompt = `Create a modern infographic diagram in Japanese. Style: Clean, professional, card-based layout with gradient blue background.
+
+Title at top: "${contentInfo.pageTitle}"
+
+3 content cards arranged horizontally, each card showing:
+`;
+
+  contentInfo.cards.forEach((card, index) => {
+    const highlights = card.highlights && card.highlights.length > 0
+      ? card.highlights.map(h => h.value).join(', ')
+      : '';
+
+    prompt += `
+Card ${index + 1}:
+- Heading: ${card.heading}
+- Key highlight (large font): ${highlights || 'N/A'}
+- Description: ${card.text}
+`;
+  });
+
+  prompt += `
+Requirements:
+- Modern, clean design
+- Blue gradient background (#667eea to #764ba2)
+- White cards with shadows
+- Large, bold numbers/highlights
+- Japanese text clearly readable
+- Professional infographic style
+- 1200x600 px landscape format`;
+
+  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${apiKey}`;
+
+  const requestBody = {
+    contents: [{
+      parts: [{ text: prompt }]
+    }],
+    generationConfig: {
+      temperature: 0.4,
+      maxOutputTokens: 2048
+    }
+  };
+
+  try {
+    console.log('🖼️ Nano Banana プロンプト:', prompt);
+
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(requestBody)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`API Error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
+    }
+
+    const data = await response.json();
+    console.log('📥 Nano Banana レスポンス:', data);
+
+    // 画像データを抽出
+    if (data.candidates && data.candidates[0]) {
+      const candidate = data.candidates[0];
+      const parts = candidate.content.parts;
+
+      // inline_dataから画像を取得
+      for (const part of parts) {
+        if (part.inline_data && part.inline_data.mime_type && part.inline_data.data) {
+          const mimeType = part.inline_data.mime_type;
+          const base64Data = part.inline_data.data;
+
+          // 画像を表示
+          displayGeneratedImage(mimeType, base64Data);
+          return;
+        }
+      }
+    }
+
+    throw new Error('画像データが見つかりませんでした');
+  } catch (error) {
+    console.error('❌ Nano Banana画像生成エラー:', error);
+    throw error;
+  }
+}
+
+/**
+ * 生成された画像を表示
+ * @param {string} mimeType - MIMEタイプ
+ * @param {string} base64Data - Base64エンコードされた画像データ
+ */
+function displayGeneratedImage(mimeType, base64Data) {
+  const imageSection = document.getElementById('generatedImageSection');
+  const imageContainer = document.getElementById('generatedImageContainer');
+
+  if (!imageSection || !imageContainer) {
+    console.error('画像表示用の要素が見つかりません');
+    return;
+  }
+
+  // 画像を作成
+  const img = document.createElement('img');
+  img.src = `data:${mimeType};base64,${base64Data}`;
+  img.style.width = '100%';
+  img.style.maxWidth = '1200px';
+  img.style.height = 'auto';
+  img.style.borderRadius = '8px';
+  img.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+
+  imageContainer.innerHTML = '';
+  imageContainer.appendChild(img);
+  imageSection.style.display = 'block';
+
+  console.log('✅ 画像を表示しました');
 }
 
 /**

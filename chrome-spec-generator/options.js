@@ -7,6 +7,8 @@
 const enableAICheckbox = document.getElementById('enableAI');
 const apiKeyGroup = document.getElementById('apiKeyGroup');
 const apiKeyInput = document.getElementById('apiKey');
+const nanoBananaGroup = document.getElementById('nanoBananaGroup');
+const enableNanoBananaCheckbox = document.getElementById('enableNanoBanana');
 const saveBtn = document.getElementById('saveBtn');
 const testBtn = document.getElementById('testBtn');
 const statusDiv = document.getElementById('status');
@@ -15,14 +17,19 @@ const statusDiv = document.getElementById('status');
  * 設定を読み込み
  */
 function loadSettings() {
-  chrome.storage.sync.get(['enableAI', 'geminiApiKey'], (result) => {
+  chrome.storage.sync.get(['enableAI', 'geminiApiKey', 'enableNanoBanana'], (result) => {
     if (result.enableAI) {
       enableAICheckbox.checked = true;
       apiKeyGroup.style.display = 'block';
+      nanoBananaGroup.style.display = 'block';
     }
 
     if (result.geminiApiKey) {
       apiKeyInput.value = result.geminiApiKey;
+    }
+
+    if (result.enableNanoBanana) {
+      enableNanoBananaCheckbox.checked = true;
     }
   });
 }
@@ -33,6 +40,7 @@ function loadSettings() {
 function saveSettings() {
   const enableAI = enableAICheckbox.checked;
   const apiKey = apiKeyInput.value.trim();
+  const enableNanoBanana = enableNanoBananaCheckbox.checked;
 
   if (enableAI && !apiKey) {
     showStatus('APIキーを入力してください', 'error');
@@ -41,7 +49,8 @@ function saveSettings() {
 
   chrome.storage.sync.set({
     enableAI: enableAI,
-    geminiApiKey: apiKey
+    geminiApiKey: apiKey,
+    enableNanoBanana: enableNanoBanana
   }, () => {
     showStatus('設定を保存しました', 'success');
   });
@@ -98,8 +107,10 @@ function showStatus(message, type) {
 enableAICheckbox.addEventListener('change', () => {
   if (enableAICheckbox.checked) {
     apiKeyGroup.style.display = 'block';
+    nanoBananaGroup.style.display = 'block';
   } else {
     apiKeyGroup.style.display = 'none';
+    nanoBananaGroup.style.display = 'none';
   }
 });
 
