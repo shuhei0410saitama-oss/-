@@ -1,0 +1,13 @@
+# Document Rule Checker - Required Libraries
+
+# PDF読み込み用
+PyMuPDF>=1.23.0
+
+# Word(.docx)読み込み用
+python-docx>=1.1.0
+
+# Claude API クライアント
+anthropic>=0.39.0
+
+# 環境変数管理
+python-dotenv>=1.0.0
