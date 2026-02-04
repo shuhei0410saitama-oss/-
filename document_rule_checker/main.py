@@ -5,13 +5,22 @@ PDFやWord文書の文章ルール違反をチェックするツール
 """
 
 import argparse
+import json
+import os
 import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
 
 from file_reader import read_document
-from rule_checker import check_document, load_rules, filter_violations_by_severity
+from rule_checker import (
+    check_document,
+    load_rules,
+    load_rules_from_text_file,
+    create_rules_from_text,
+    filter_violations_by_severity,
+)
+from offline_checker import check_document_offline
 
 
 # 色付き出力用のANSIコード
@@ -59,9 +68,9 @@ def print_violation(violation, index: int) -> None:
     print()
 
 
-def print_summary(violations: list, severity_counts: dict) -> None:
+def print_summary(violations: list, severity_counts: dict, mode: str = "API") -> None:
     """サマリーを表示する"""
-    print(f"{Colors.BOLD}--- 検出結果サマリー ---{Colors.RESET}")
+    print(f"{Colors.BOLD}--- 検出結果サマリー ({mode}モード) ---{Colors.RESET}")
     print(f"  違反総数: {len(violations)}件")
     print(f"    - 高 (High):   {Colors.RED}{severity_counts.get('high', 0)}件{Colors.RESET}")
     print(f"    - 中 (Medium): {Colors.YELLOW}{severity_counts.get('medium', 0)}件{Colors.RESET}")
@@ -78,9 +87,23 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 使用例:
+  # 基本的な使い方（APIモード）
   python main.py document.pdf
-  python main.py report.docx --rules custom_rules.json
-  python main.py document.pdf --severity medium
+  python main.py report.docx
+
+  # APIキーなしで使う（オフラインモード）
+  python main.py document.pdf --offline
+
+  # ルールを直接指定
+  python main.py document.pdf --rule-text "です・ます調で統一"
+
+  # ルールをテキストファイルから読み込む
+  python main.py document.pdf --rule-file my_rules.txt
+
+  # JSONルールファイルを使用
+  python main.py document.pdf --rules custom_rules.json
+
+  # 結果をJSONに保存
   python main.py document.pdf --output results.json
         """
     )
@@ -89,23 +112,48 @@ def main():
         'file',
         help='チェック対象のファイル（PDF または Word .docx）'
     )
-    parser.add_argument(
+
+    # ルール指定オプション
+    rule_group = parser.add_argument_group('ルール指定')
+    rule_group.add_argument(
         '--rules', '-r',
-        help='カスタムルールファイルのパス（デフォルト: rules.json）',
+        help='JSONルールファイルのパス（デフォルト: rules.json）',
         default=None
     )
-    parser.add_argument(
+    rule_group.add_argument(
+        '--rule-file', '-rf',
+        help='テキスト形式のルールファイル（1行1ルール）',
+        default=None
+    )
+    rule_group.add_argument(
+        '--rule-text', '-rt',
+        action='append',
+        help='ルールを直接指定（複数指定可）',
+        default=[]
+    )
+
+    # モード指定
+    mode_group = parser.add_argument_group('動作モード')
+    mode_group.add_argument(
+        '--offline',
+        action='store_true',
+        help='APIを使わない簡易チェックモード（APIキー不要）'
+    )
+
+    # 出力オプション
+    output_group = parser.add_argument_group('出力オプション')
+    output_group.add_argument(
         '--severity', '-s',
         choices=['high', 'medium', 'low'],
         default='low',
         help='表示する最低重要度（デフォルト: low = すべて表示）'
     )
-    parser.add_argument(
+    output_group.add_argument(
         '--output', '-o',
         help='結果をJSONファイルに出力',
         default=None
     )
-    parser.add_argument(
+    output_group.add_argument(
         '--quiet', '-q',
         action='store_true',
         help='詳細な出力を抑制'
@@ -119,17 +167,37 @@ def main():
         print(f"{Colors.RED}エラー: ファイルが見つかりません: {args.file}{Colors.RESET}")
         sys.exit(1)
 
-    # ルールファイルの読み込み
-    try:
-        rules = load_rules(args.rules)
+    # オフラインモードの判定（APIキーがない場合も自動的にオフラインモードに）
+    use_offline = args.offline
+    if not use_offline and not os.environ.get('ANTHROPIC_API_KEY'):
         if not args.quiet:
-            print(f"{Colors.GREEN}ルールファイルを読み込みました（{len(rules['rules'])}件のルール）{Colors.RESET}")
-    except FileNotFoundError as e:
-        print(f"{Colors.RED}エラー: ルールファイルが見つかりません: {e}{Colors.RESET}")
-        sys.exit(1)
-    except Exception as e:
-        print(f"{Colors.RED}エラー: ルールファイルの読み込みに失敗: {e}{Colors.RESET}")
-        sys.exit(1)
+            print(f"{Colors.YELLOW}注意: APIキーが設定されていないため、オフラインモードで実行します。{Colors.RESET}")
+            print(f"{Colors.YELLOW}      高精度なチェックには ANTHROPIC_API_KEY を設定してください。{Colors.RESET}\n")
+        use_offline = True
+
+    # ルールの読み込み（オフラインモード以外の場合）
+    rules = None
+    if not use_offline:
+        try:
+            # ルールの優先順位: --rule-text > --rule-file > --rules > デフォルト
+            if args.rule_text:
+                rules = create_rules_from_text(args.rule_text)
+                if not args.quiet:
+                    print(f"{Colors.GREEN}テキストからルールを作成しました（{len(rules['rules'])}件）{Colors.RESET}")
+            elif args.rule_file:
+                rules = load_rules_from_text_file(args.rule_file)
+                if not args.quiet:
+                    print(f"{Colors.GREEN}ルールファイルを読み込みました: {args.rule_file}（{len(rules['rules'])}件）{Colors.RESET}")
+            else:
+                rules = load_rules(args.rules)
+                if not args.quiet:
+                    print(f"{Colors.GREEN}ルールファイルを読み込みました（{len(rules['rules'])}件のルール）{Colors.RESET}")
+        except FileNotFoundError as e:
+            print(f"{Colors.RED}エラー: ルールファイルが見つかりません: {e}{Colors.RESET}")
+            sys.exit(1)
+        except Exception as e:
+            print(f"{Colors.RED}エラー: ルールファイルの読み込みに失敗: {e}{Colors.RESET}")
+            sys.exit(1)
 
     # ファイルの読み込み
     if not args.quiet:
@@ -145,11 +213,18 @@ def main():
 
     # 文章チェック
     if not args.quiet:
-        print_header("文章ルールチェック実行中...")
-        print("Claude APIに問い合わせています...")
+        if use_offline:
+            print_header("オフラインモードでチェック中...")
+            print("正規表現ベースの簡易チェックを実行しています...")
+        else:
+            print_header("文章ルールチェック実行中...")
+            print("Claude APIに問い合わせています...")
 
     try:
-        violations = check_document(text, rules)
+        if use_offline:
+            violations = check_document_offline(text)
+        else:
+            violations = check_document(text, rules)
     except Exception as e:
         print(f"{Colors.RED}エラー: チェックに失敗しました: {e}{Colors.RESET}")
         sys.exit(1)
@@ -172,13 +247,14 @@ def main():
         for i, violation in enumerate(filtered_violations, 1):
             print_violation(violation, i)
 
-        print_summary(violations, severity_counts)
+        mode_name = "オフライン" if use_offline else "API"
+        print_summary(violations, severity_counts, mode_name)
 
     # JSON出力
     if args.output:
-        import json
         output_data = {
             'file': str(file_path),
+            'mode': 'offline' if use_offline else 'api',
             'total_violations': len(violations),
             'violations': [
                 {

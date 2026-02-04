@@ -38,6 +38,57 @@ def load_rules(rules_path: str = None) -> dict:
         return json.load(f)
 
 
+def load_rules_from_text_file(file_path: str) -> dict:
+    """
+    テキストファイルからルールを読み込む（1行1ルール形式）
+
+    Args:
+        file_path: テキストファイルのパス
+
+    Returns:
+        ルール設定の辞書
+    """
+    rules = []
+    with open(file_path, 'r', encoding='utf-8') as f:
+        for i, line in enumerate(f, 1):
+            line = line.strip()
+            if line and not line.startswith('#'):  # 空行とコメント行をスキップ
+                rules.append({
+                    "id": f"TEXT{i:03d}",
+                    "name": line[:20] + "..." if len(line) > 20 else line,
+                    "description": line,
+                    "severity": "medium",
+                    "examples": {"bad": "", "good": ""}
+                })
+
+    return {"rules": rules, "settings": {"check_all_rules": True}}
+
+
+def create_rules_from_text(rule_texts: list[str]) -> dict:
+    """
+    テキストのリストからルール辞書を作成する
+
+    Args:
+        rule_texts: ルールテキストのリスト
+
+    Returns:
+        ルール設定の辞書
+    """
+    rules = []
+    for i, text in enumerate(rule_texts, 1):
+        text = text.strip()
+        if text:
+            rules.append({
+                "id": f"CUSTOM{i:03d}",
+                "name": text[:20] + "..." if len(text) > 20 else text,
+                "description": text,
+                "severity": "medium",
+                "examples": {"bad": "", "good": ""}
+            })
+
+    return {"rules": rules, "settings": {"check_all_rules": True}}
+
+
 def build_check_prompt(text: str, rules: dict) -> str:
     """
     ルールチェック用のプロンプトを構築する
