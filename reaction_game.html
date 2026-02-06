@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>反射神経ゲーム</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', sans-serif;
+    background: #1a1a2e;
+    color: #eee;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  #game {
+    text-align: center;
+    width: 100%;
+    max-width: 500px;
+    padding: 20px;
+  }
+
+  h1 {
+    font-size: 2rem;
+    margin-bottom: 0.3em;
+    background: linear-gradient(135deg, #e94560, #f5a623);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .subtitle {
+    color: #888;
+    font-size: 0.9rem;
+    margin-bottom: 2em;
+  }
+
+  #screen {
+    width: 100%;
+    min-height: 280px;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: background 0.2s;
+    padding: 30px;
+    position: relative;
+  }
+
+  #screen.waiting {
+    background: #16213e;
+    border: 3px solid #0f3460;
+  }
+
+  #screen.ready {
+    background: #b8860b;
+    border: 3px solid #daa520;
+    animation: pulse 1.5s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.85; }
+  }
+
+  #screen.go {
+    background: #0a8a2e;
+    border: 3px solid #0ece4e;
+    animation: none;
+  }
+
+  #screen.foul {
+    background: #8b0000;
+    border: 3px solid #e94560;
+    animation: shake 0.4s;
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-10px); }
+    75% { transform: translateX(10px); }
+  }
+
+  #screen.result {
+    background: #16213e;
+    border: 3px solid #0f3460;
+  }
+
+  .screen-text {
+    font-size: 1.5rem;
+    font-weight: bold;
+    line-height: 1.6;
+  }
+
+  .screen-text.big {
+    font-size: 3rem;
+  }
+
+  .screen-hint {
+    font-size: 0.85rem;
+    color: #aaa;
+    margin-top: 15px;
+  }
+
+  .reaction-time {
+    font-size: 3.5rem;
+    font-weight: bold;
+    color: #0ece4e;
+    margin: 10px 0;
+  }
+
+  .reaction-unit {
+    font-size: 1.2rem;
+    color: #aaa;
+  }
+
+  .rank {
+    font-size: 1.3rem;
+    margin-top: 10px;
+  }
+
+  .round-info {
+    font-size: 0.9rem;
+    color: #888;
+    margin-bottom: 20px;
+  }
+
+  /* 結果画面 */
+  #results {
+    display: none;
+    margin-top: 20px;
+    text-align: center;
+  }
+
+  #results h2 {
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+    color: #f5a623;
+  }
+
+  .result-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 15px;
+  }
+
+  .result-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #333;
+    font-size: 1rem;
+  }
+
+  .result-table td:first-child {
+    color: #888;
+    text-align: left;
+  }
+
+  .result-table td:last-child {
+    text-align: right;
+    font-weight: bold;
+  }
+
+  .stats {
+    background: #16213e;
+    border-radius: 12px;
+    padding: 15px;
+    margin-top: 15px;
+  }
+
+  .stats div {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    font-size: 1rem;
+  }
+
+  .stats .label { color: #888; }
+  .stats .value { font-weight: bold; }
+  .stats .best { color: #0ece4e; }
+  .stats .avg { color: #f5a623; }
+
+  .final-rank {
+    font-size: 1.4rem;
+    margin-top: 20px;
+    padding: 15px;
+    background: linear-gradient(135deg, #16213e, #1a1a2e);
+    border-radius: 12px;
+    border: 2px solid #f5a623;
+  }
+
+  #retry-btn {
+    margin-top: 25px;
+    padding: 14px 40px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    border: none;
+    border-radius: 30px;
+    background: linear-gradient(135deg, #e94560, #f5a623);
+    color: white;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+
+  #retry-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 20px rgba(233, 69, 96, 0.4);
+  }
+</style>
+</head>
+<body>
+
+<div id="game">
+  <h1>反射神経ゲーム</h1>
+  <p class="subtitle">Reaction Time Game</p>
+
+  <div class="round-info" id="round-info">ラウンド 1 / 5</div>
+
+  <div id="screen" class="waiting">
+    <div class="screen-text">画面をクリック（タップ）して<br>ゲームスタート！</div>
+    <div class="screen-hint">全5ラウンドで反応速度を測定します</div>
+  </div>
+
+  <div id="results"></div>
+</div>
+
+<script>
+(function() {
+  const TOTAL_ROUNDS = 5;
+  const screen = document.getElementById('screen');
+  const roundInfo = document.getElementById('round-info');
+  const resultsDiv = document.getElementById('results');
+
+  let state = 'idle';       // idle, waiting, ready, go, foul, roundResult, finished
+  let round = 0;
+  let results = [];         // 各ラウンドの結果 (ms or null)
+  let timeoutId = null;
+  let goTime = 0;
+
+  function getRank(ms) {
+    if (ms < 150) return '★★★★★ 超人的！';
+    if (ms < 200) return '★★★★☆ プロゲーマー級！';
+    if (ms < 250) return '★★★☆☆ 平均より速い！';
+    if (ms < 350) return '★★☆☆☆ まずまず！';
+    return '★☆☆☆☆ もっと集中！';
+  }
+
+  function getRankColor(ms) {
+    if (ms < 150) return '#ff4500';
+    if (ms < 200) return '#0ece4e';
+    if (ms < 250) return '#4ecdc4';
+    if (ms < 350) return '#f5a623';
+    return '#e94560';
+  }
+
+  function startRound() {
+    round++;
+    if (round > TOTAL_ROUNDS) {
+      showFinalResults();
+      return;
+    }
+
+    roundInfo.textContent = `ラウンド ${round} / ${TOTAL_ROUNDS}`;
+    state = 'ready';
+    screen.className = 'ready';
+    screen.innerHTML = `
+      <div class="screen-text big">用意...</div>
+      <div class="screen-hint">まだ押さないで！</div>
+    `;
+
+    const waitTime = 1500 + Math.random() * 3500;
+    timeoutId = setTimeout(() => {
+      state = 'go';
+      goTime = performance.now();
+      screen.className = 'go';
+      screen.innerHTML = `
+        <div class="screen-text big">今だ！</div>
+        <div class="screen-hint">今すぐクリック（タップ）！</div>
+      `;
+    }, waitTime);
+  }
+
+  function handleFoul() {
+    if (timeoutId) clearTimeout(timeoutId);
+    state = 'foul';
+    results.push(null);
+    screen.className = 'foul';
+    screen.innerHTML = `
+      <div class="screen-text big">フライング！</div>
+      <div class="screen-hint" style="color:#faa">早すぎた！「今だ！」を待って！<br>クリックで次へ</div>
+    `;
+  }
+
+  function handleHit() {
+    const reactionMs = performance.now() - goTime;
+    results.push(reactionMs);
+    state = 'roundResult';
+    screen.className = 'result';
+
+    const color = getRankColor(reactionMs);
+    screen.innerHTML = `
+      <div class="reaction-time" style="color:${color}">${reactionMs.toFixed(1)}</div>
+      <div class="reaction-unit">ミリ秒</div>
+      <div class="rank">${getRank(reactionMs)}</div>
+      <div class="screen-hint" style="margin-top:20px">クリックで次へ</div>
+    `;
+  }
+
+  function showFinalResults() {
+    state = 'finished';
+    screen.style.display = 'none';
+    roundInfo.style.display = 'none';
+    resultsDiv.style.display = 'block';
+
+    const valid = results.filter(r => r !== null);
+    const fouls = results.filter(r => r === null).length;
+
+    let html = '<h2>結果発表</h2>';
+    html += '<table class="result-table">';
+    for (let i = 0; i < results.length; i++) {
+      const r = results[i];
+      const val = r === null
+        ? '<span style="color:#e94560">フライング</span>'
+        : `<span style="color:${getRankColor(r)}">${r.toFixed(1)} ms</span>`;
+      html += `<tr><td>ラウンド ${i + 1}</td><td>${val}</td></tr>`;
+    }
+    html += '</table>';
+
+    if (valid.length > 0) {
+      const best = Math.min(...valid);
+      const worst = Math.max(...valid);
+      const avg = valid.reduce((a, b) => a + b, 0) / valid.length;
+
+      html += '<div class="stats">';
+      html += `<div><span class="label">最速</span><span class="value best">${best.toFixed(1)} ms</span></div>`;
+      html += `<div><span class="label">最遅</span><span class="value">${worst.toFixed(1)} ms</span></div>`;
+      html += `<div><span class="label">平均</span><span class="value avg">${avg.toFixed(1)} ms</span></div>`;
+      if (fouls > 0) {
+        html += `<div><span class="label">フライング</span><span class="value" style="color:#e94560">${fouls} 回</span></div>`;
+      }
+      html += '</div>';
+      html += `<div class="final-rank">総合評価: ${getRank(avg)}</div>`;
+    } else {
+      html += '<p style="color:#e94560;margin-top:20px;">有効な記録なし...全部フライング！？</p>';
+    }
+
+    html += '<button id="retry-btn">もう一度遊ぶ</button>';
+    resultsDiv.innerHTML = html;
+
+    document.getElementById('retry-btn').addEventListener('click', resetGame);
+  }
+
+  function resetGame() {
+    round = 0;
+    results = [];
+    state = 'idle';
+    resultsDiv.style.display = 'none';
+    resultsDiv.innerHTML = '';
+    screen.style.display = 'flex';
+    roundInfo.style.display = 'block';
+    roundInfo.textContent = `ラウンド 1 / ${TOTAL_ROUNDS}`;
+    screen.className = 'waiting';
+    screen.innerHTML = `
+      <div class="screen-text">画面をクリック（タップ）して<br>ゲームスタート！</div>
+      <div class="screen-hint">全5ラウンドで反応速度を測定します</div>
+    `;
+  }
+
+  screen.addEventListener('click', () => {
+    switch (state) {
+      case 'idle':
+        startRound();
+        break;
+      case 'ready':
+        handleFoul();
+        break;
+      case 'go':
+        handleHit();
+        break;
+      case 'foul':
+      case 'roundResult':
+        startRound();
+        break;
+    }
+  });
+
+  // スペースキーでも操作可能
+  document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' || e.code === 'Enter') {
+      e.preventDefault();
+      screen.click();
+    }
+  });
+})();
+</script>
+</body>
+</html>
