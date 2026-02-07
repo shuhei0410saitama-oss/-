@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>古い洋館からの脱出</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Serif JP', 'Yu Mincho', serif;
+    background: #0a0a0f;
+    color: #d4c5a0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+  }
+
+  /* Flickering ambient light */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 30%, rgba(180, 120, 40, 0.06) 0%, transparent 70%);
+    animation: flicker 4s ease-in-out infinite alternate;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  @keyframes flicker {
+    0%, 100% { opacity: 1; }
+    20% { opacity: 0.7; }
+    40% { opacity: 0.9; }
+    60% { opacity: 0.6; }
+    80% { opacity: 1; }
+  }
+
+  /* Dust particles */
+  .dust {
+    position: fixed;
+    width: 3px;
+    height: 3px;
+    background: rgba(200, 180, 140, 0.3);
+    border-radius: 50%;
+    animation: drift linear infinite;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  @keyframes drift {
+    0% { transform: translateY(100vh) translateX(0); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { transform: translateY(-10vh) translateX(80px); opacity: 0; }
+  }
+
+  #game-container {
+    position: relative;
+    z-index: 1;
+    max-width: 700px;
+    width: 90%;
+    padding: 2.5rem;
+    background: linear-gradient(145deg, rgba(20, 18, 15, 0.95), rgba(30, 25, 20, 0.92));
+    border: 1px solid rgba(120, 90, 40, 0.3);
+    border-radius: 4px;
+    box-shadow:
+      0 0 60px rgba(0, 0, 0, 0.8),
+      inset 0 0 40px rgba(0, 0, 0, 0.3),
+      0 0 120px rgba(100, 70, 20, 0.05);
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  #game-container::-webkit-scrollbar { width: 6px; }
+  #game-container::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
+  #game-container::-webkit-scrollbar-thumb { background: rgba(120,90,40,0.4); border-radius: 3px; }
+
+  h1 {
+    text-align: center;
+    font-size: 1.8rem;
+    color: #c4a55a;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 0 20px rgba(196, 165, 90, 0.3);
+    letter-spacing: 0.3em;
+  }
+
+  .subtitle {
+    text-align: center;
+    font-size: 0.85rem;
+    color: rgba(180, 160, 120, 0.5);
+    margin-bottom: 2rem;
+    letter-spacing: 0.2em;
+  }
+
+  #scene-indicator {
+    text-align: right;
+    font-size: 0.75rem;
+    color: rgba(120, 100, 60, 0.4);
+    margin-bottom: 1rem;
+  }
+
+  .narrative {
+    line-height: 2;
+    font-size: 1rem;
+    margin-bottom: 2rem;
+    opacity: 0;
+    animation: fadeIn 1.2s ease-out forwards;
+    white-space: pre-line;
+  }
+
+  .narrative .highlight {
+    color: #c4a55a;
+    font-weight: 700;
+  }
+
+  .narrative .danger {
+    color: #a04040;
+    font-weight: 700;
+  }
+
+  .narrative .eerie {
+    color: #7a9a7a;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .choices {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    opacity: 0;
+    animation: fadeIn 1s ease-out 0.8s forwards;
+  }
+
+  .choice-btn {
+    background: rgba(40, 35, 25, 0.8);
+    border: 1px solid rgba(120, 90, 40, 0.25);
+    color: #c8b87a;
+    padding: 1rem 1.2rem;
+    font-family: inherit;
+    font-size: 0.95rem;
+    text-align: left;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    line-height: 1.6;
+  }
+
+  .choice-btn::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: rgba(196, 165, 90, 0);
+    transition: background 0.3s ease;
+  }
+
+  .choice-btn:hover {
+    background: rgba(60, 50, 30, 0.9);
+    border-color: rgba(196, 165, 90, 0.5);
+    transform: translateX(4px);
+    box-shadow: 0 0 15px rgba(100, 70, 20, 0.15);
+  }
+
+  .choice-btn:hover::before {
+    background: rgba(196, 165, 90, 0.7);
+  }
+
+  .choice-btn:active {
+    transform: translateX(2px);
+  }
+
+  .choice-label {
+    color: rgba(196, 165, 90, 0.6);
+    margin-right: 0.5em;
+    font-weight: 700;
+  }
+
+  /* Game Over */
+  .game-over-text {
+    text-align: center;
+    font-size: 1.6rem;
+    color: #8b2020;
+    margin-bottom: 1rem;
+    text-shadow: 0 0 20px rgba(139, 32, 32, 0.4);
+    letter-spacing: 0.3em;
+    animation: pulseRed 2s ease-in-out infinite;
+  }
+
+  @keyframes pulseRed {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+
+  /* Clear */
+  .clear-text {
+    text-align: center;
+    font-size: 1.6rem;
+    color: #c4a55a;
+    margin-bottom: 1rem;
+    text-shadow: 0 0 30px rgba(196, 165, 90, 0.5);
+    letter-spacing: 0.3em;
+    animation: glow 2s ease-in-out infinite;
+  }
+
+  @keyframes glow {
+    0%, 100% { text-shadow: 0 0 20px rgba(196, 165, 90, 0.3); }
+    50% { text-shadow: 0 0 40px rgba(196, 165, 90, 0.6), 0 0 60px rgba(196, 165, 90, 0.2); }
+  }
+
+  .restart-btn {
+    display: block;
+    margin: 1.5rem auto 0;
+    background: rgba(40, 35, 25, 0.8);
+    border: 1px solid rgba(120, 90, 40, 0.4);
+    color: #c8b87a;
+    padding: 0.8rem 2rem;
+    font-family: inherit;
+    font-size: 1rem;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+    letter-spacing: 0.15em;
+  }
+
+  .restart-btn:hover {
+    background: rgba(60, 50, 30, 0.9);
+    border-color: rgba(196, 165, 90, 0.6);
+    box-shadow: 0 0 20px rgba(100, 70, 20, 0.2);
+  }
+
+  /* Screen shake for game over */
+  .shake {
+    animation: shake 0.5s ease-in-out;
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 50%, 90% { transform: translateX(-4px); }
+    30%, 70% { transform: translateX(4px); }
+  }
+
+  /* Fade to black for game over */
+  #overlay {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.8s ease;
+    z-index: 10;
+  }
+
+  #overlay.active {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .separator {
+    text-align: center;
+    color: rgba(120, 90, 40, 0.3);
+    margin: 1.5rem 0;
+    letter-spacing: 1em;
+  }
+
+  /* Mobile */
+  @media (max-width: 600px) {
+    #game-container { padding: 1.5rem; }
+    h1 { font-size: 1.4rem; }
+    .narrative { font-size: 0.9rem; }
+    .choice-btn { font-size: 0.85rem; padding: 0.8rem 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<div id="overlay"></div>
+
+<div id="game-container">
+  <div id="game-content"></div>
+</div>
+
+<script>
+// ==========================================
+//  古い洋館からの脱出 - Text Adventure Game
+// ==========================================
+
+const scenes = {
+  // ============ タイトル ============
+  title: {
+    text: null,
+    render(container) {
+      container.innerHTML = `
+        <h1>古い洋館からの脱出</h1>
+        <p class="subtitle">― ESCAPE FROM THE OLD MANSION ―</p>
+        <div class="separator">* * *</div>
+        <div class="narrative">
+あなたは心霊スポットの取材を行うライターだ。
+
+街外れに佇む<span class="highlight">築百年の洋館</span>。
+「入った者は二度と戻れない」という噂を確かめるため、
+あなたは一人、その扉をくぐった。
+
+重い扉が背後で閉まる音がした。
+振り返ると――<span class="danger">鍵がかかっている</span>。
+
+外は既に闇に沈み、
+館内にはかすかな<span class="eerie">ろうそくの匂い</span>が漂っている。</div>
+        <div class="choices">
+          <button class="choice-btn" onclick="goTo('scene1')">
+            <span class="choice-label">▶</span> 洋館の探索を始める
+          </button>
+        </div>
+      `;
+    }
+  },
+
+  // ============ SCENE 1: エントランスホール ============
+  scene1: {
+    render(container) {
+      container.innerHTML = `
+        <div id="scene-indicator">― 第一章 ―</div>
+        <div class="narrative">
+<span class="highlight">【エントランスホール】</span>
+
+広い玄関ホール。天井からは埃まみれのシャンデリアが垂れ下がり、
+壁には色褪せた肖像画が並んでいる。
+
+正面に<span class="highlight">大きな階段</span>が二階へと続いている。
+左手には<span class="highlight">重厚な木の扉</span>。
+右手にはもう一つ、<span class="highlight">装飾された扉</span>がある。
+
+テーブルの上に<span class="eerie">一本のろうそく</span>が灯っている。
+まるで誰かがあなたを待っていたかのように。</div>
+        <div class="choices">
+          <button class="choice-btn" onclick="goTo('scene1_dead')">
+            <span class="choice-label">A.</span> ろうそくを持たずに、そのまま階段を上がる
+          </button>
+          <button class="choice-btn" onclick="goTo('scene2')">
+            <span class="choice-label">B.</span> ろうそくを手に取り、左の扉を開ける
+          </button>
+          <button class="choice-btn" onclick="goTo('scene3')">
+            <span class="choice-label">C.</span> ろうそくを手に取り、右の扉を開ける
+          </button>
+        </div>
+      `;
+    }
+  },
+
+  scene1_dead: {
+    gameover: true,
+    render(container) {
+      container.innerHTML = `
+        <div class="narrative">
+暗い階段を手探りで上がっていく。
+
+三段、四段、五段……
+
+<span class="danger">六段目で、足が踏み抜いた。</span>
+
+腐った木が砕け、あなたの体は闇の中へ落ちていく。
+叫び声は、誰にも届かなかった。</div>
+        ${gameOverHTML()}
+      `;
+    }
+  },
+
+  // ============ SCENE 2: 応接間（図書室ルート） ============
+  scene2: {
+    render(container) {
+      container.innerHTML = `
+        <div id="scene-indicator">― 第二章 ―</div>
+        <div class="narrative">
+<span class="highlight">【応接間】</span>
+
+ろうそくの灯りが照らし出したのは、古い応接間だった。
+革張りのソファはひび割れ、暖炉には灰が残っている。
+
+壁際の<span class="highlight">書斎机</span>の上に、
+革表紙の<span class="highlight">古い日記帳</span>が置かれている。
+
+そして部屋の奥には<span class="eerie">大きな暖炉</span>。
+中に何か光るものが見える気がする。</div>
+        <div class="choices">
+          <button class="choice-btn" onclick="goTo('scene4')">
+            <span class="choice-label">A.</span> 机の上の日記帳を読む
+          </button>
+          <button class="choice-btn" onclick="goTo('scene2_dead')">
+            <span class="choice-label">B.</span> 暖炉の中を覗き込む
+          </button>
+        </div>
+      `;
+    }
+  },
+
+  scene2_dead: {
+    gameover: true,
+    render(container) {
+      container.innerHTML = `
+        <div class="narrative">
+暖炉に頭を入れて中を覗き込む。
+奥に<span class="eerie">金色の何か</span>が光っている。
+
+手を伸ばした瞬間――
+
+<span class="danger">轟音とともに煙突が崩れ落ちた。</span>
+
+レンガと瓦礫があなたの上に降り注ぎ、
+暗闇が全てを覆い尽くした。</div>
+        ${gameOverHTML()}
+      `;
+    }
+  },
+
+  // ============ SCENE 3: 食堂ルート ============
+  scene3: {
+    render(container) {
+      container.innerHTML = `
+        <div id="scene-indicator">― 第二章 ―</div>
+        <div class="narrative">
+<span class="highlight">【食堂】</span>
+
+長い食卓に、銀の燭台が並んでいる。
+驚くべきことに、<span class="danger">料理が並べられている</span>。
+まだ湯気が立っているように見える。
+
+銀の蓋が被せられた大皿。
+ワイングラスに注がれた<span class="danger">深紅の液体</span>。
+
+食卓の奥に、キッチンへと続く<span class="highlight">スイングドア</span>が見える。</div>
+        <div class="choices">
+          <button class="choice-btn" onclick="goTo('scene3_dead')">
+            <span class="choice-label">A.</span> 銀の蓋を開けて中を確かめる
+          </button>
+          <button class="choice-btn" onclick="goTo('scene5')">
+            <span class="choice-label">B.</span> 料理には触れず、キッチンへ進む
+          </button>
+        </div>
+      `;
+    }
+  },
+
+  scene3_dead: {
+    gameover: true,
+    render(container) {
+      container.innerHTML = `
+        <div class="narrative">
+銀の蓋に手をかけ、持ち上げる。
+
+中には――
+
+<span class="danger">無数の目玉がこちらを見つめていた。</span>
+
+叫び声を上げた瞬間、全ての燭台の火が消えた。
+暗闇の中で、背後から冷たい手が首に触れる。
+
+「お食事を楽しんでいただけましたか？」
+
+<span class="eerie">囁き声が、永遠に耳から離れなかった。</span></div>
+        ${gameOverHTML()}
+      `;
+    }
+  },
+
+  // ============ SCENE 4: 日記の手がかり ============
+  scene4: {
+    render(container) {
+      container.innerHTML = `
+        <div id="scene-indicator">― 第三章 ―</div>
+        <div class="narrative">
+<span class="highlight">【日記の手がかり】</span>
+
+震える手で日記を開く。
+最後の書き込みは、<span class="eerie">百年前の日付</span>だった。
+
+<span class="eerie">「この館から出るには、銀の鍵が必要だ。
+鍵は二階の主人の寝室、机の引き出しにある。
+だが、決して正面階段を使ってはならない。
+使用人用の階段を探せ。壁の中に隠されている。
+
+それから一つだけ忠告を。
+<span class="danger">二階の鏡を覗いてはならない。
+鏡の中のものが、こちら側に出てくる。</span>」</span>
+
+日記はそこで途切れていた。
+ページの端に<span class="danger">乾いた血痕</span>がこびりついている。</div>
+        <div class="choices">
+          <button class="choice-btn" onclick="goTo('scene6')">
+            <span class="choice-label">A.</span> 壁を調べて使用人用の階段を探す
+          </button>
+          <button class="choice-btn" onclick="goTo('scene4_dead')">
+            <span class="choice-label">B.</span> 部屋の隅にある鏡が気になる……覗いてみる
+          </button>
+        </div>
+      `;
+    }
+  },
+
+  scene4_dead: {
+    gameover: true,
+    render(container) {
+      container.innerHTML = `
+        <div class="narrative">
+好奇心に抗えず、部屋の隅の姿見に近づく。
+
+ろうそくを掲げて鏡を覗き込む。
+
+映っているのは自分の顔……
+<span class="danger">いや、違う。</span>
+
+鏡の中の「あなた」は、笑っていた。
+あなた自身は笑っていないのに。
+
+<span class="danger">鏡の中から手が伸びてきた。</span>
+
+冷たい指があなたの腕を掴み、
+鏡の向こう側へ引きずり込まれていく。
+
+最後に見えたのは、鏡の「こちら側」に立つ
+<span class="eerie">もう一人の自分の後ろ姿だった。</span></div>
+        ${gameOverHTML()}
+      `;
+    }
+  },
+
+  // ============ SCENE 5: キッチン ============
+  scene5: {
+    render(container) {
+      container.innerHTML = `
+        <div id="scene-indicator">― 第三章 ―</div>
+        <div class="narrative">
+<span class="highlight">【キッチン】</span>
+
+古いキッチン。銅鍋が壁に掛かり、
+大きなかまどの残り火がかすかに赤い。
+
+<span class="highlight">棚</span>には錆びた缶や瓶が並んでいる。
+<span class="highlight">シンクの下</span>の戸棚が少しだけ開いている。
+
+どこかから<span class="eerie">水滴の落ちる音</span>が聞こえる。
+ぽたり、ぽたり……規則正しく。</div>
+        <div class="choices">
+          <button class="choice-btn" onclick="goTo('scene5_dead')">
+            <span class="choice-label">A.</span> 棚の瓶を調べる
+          </button>
+          <button class="choice-btn" onclick="goTo('scene5b')">
+            <span class="choice-label">B.</span> シンクの下の戸棚を開ける
+          </button>
+        </div>
+      `;
+    }
+  },
+
+  scene5_dead: {
+    gameover: true,
+    render(container) {
+      container.innerHTML = `
+        <div class="narrative">
+棚に手を伸ばし、瓶を一つ取ろうとする。
+
+その瞬間、棚全体が<span class="danger">ぐらりと傾いた</span>。
+
+古くなった固定具が外れ、
+<span class="danger">重い棚が雪崩のように倒れてくる。</span>
+
+ガラスの瓶が砕け散り、錆びた缶が降り注ぐ。
+逃げる間もなく、あなたは瓦礫の下に埋もれた。
+
+意識が遠のく中、<span class="eerie">水滴の音だけが響いていた</span>。</div>
+        ${gameOverHTML()}
+      `;
+    }
+  },
+
+  // ============ SCENE 5B: 裏口への道（隠し通路ルート） ============
+  scene5b: {
+    render(container) {
+      container.innerHTML = `
+        <div id="scene-indicator">― 第四章 ―</div>
+        <div class="narrative">
+<span class="highlight">【隠し通路の発見】</span>
+
+シンクの下の戸棚を開けると、
+奥の壁板が一枚外れていた。
+
+その向こうに、<span class="highlight">狭い通路</span>が続いている。
+かすかに<span class="eerie">外の空気の匂い</span>がする。
+
+ろうそくの炎が通路からの風に揺れている。
+この先に出口があるのかもしれない。
+
+だが通路は暗く、狭い。
+何があるか分からない。</div>
+        <div class="choices">
+          <button class="choice-btn" onclick="goTo('scene10')">
+            <span class="choice-label">A.</span> 身を屈めて通路に入り、慎重に進む
+          </button>
+          <button class="choice-btn" onclick="goTo('scene5b_dead')">
+            <span class="choice-label">B.</span> 急いで通路を駆け抜ける
+          </button>
+        </div>
+      `;
+    }
+  },
+
+  scene5b_dead: {
+    gameover: true,
+    render(container) {
+      container.innerHTML = `
+        <div class="narrative">
+一刻も早くこの館を出たい。
+その一心で通路を走り出す。
+
+三歩目で、<span class="danger">足元の床が抜けた</span>。
+
+古い通路の床板は、とうに朽ちていた。
+暗い穴に落ちていく。
+下から<span class="eerie">湿った冷気</span>が吹き上がる。
+
+落下は、思ったよりも長く続いた。
+
+<span class="danger">底に着くことは、なかった。</span></div>
+        ${gameOverHTML()}
+      `;
+    }
+  },
+
+  // ============ SCENE 6: 使用人の階段 ============
+  scene6: {
+    render(container) {
+      container.innerHTML = `
+        <div id="scene-indicator">― 第四章 ―</div>
+        <div class="narrative">
+<span class="highlight">【使用人の階段】</span>
+
+壁を丹念に調べていくと、
+暖炉の横の壁板が一枚、<span class="highlight">わずかに浮いている</span>。
+
+押し込むと、カチリと音がして
+壁の一部がスライドした。
+
+中には<span class="highlight">狭い螺旋階段</span>。
+使用人用の隠し階段に違いない。
+
+埃が積もった段を、一段ずつ上がっていく。
+ろうそくの灯りが壁に不気味な影を作る。
+
+二階に着いた。
+廊下に三つの扉が並んでいる。</div>
+        <div class="choices">
+          <button class="choice-btn" onclick="goTo('scene6_dead')">
+            <span class="choice-label">A.</span> 左の扉——かすかに音楽が聞こえる
+          </button>
+          <button class="choice-btn" onclick="goTo('scene7')">
+            <span class="choice-label">B.</span> 真ん中の扉——冷たい空気が漏れている
+          </button>
+          <button class="choice-btn" onclick="goTo('scene8')">
+            <span class="choice-label">C.</span> 右の扉——静まり返っている
+          </button>
+        </div>
+      `;
+    }
+  },
+
+  scene6_dead: {
+    gameover: true,
+    render(container) {
+      container.innerHTML = `
+        <div class="narrative">
+美しいワルツの旋律に導かれ、左の扉を開ける。
+
+そこには<span class="eerie">豪華な舞踏会</span>が広がっていた。
+着飾った紳士淑女が優雅に踊っている。
+
+「さあ、お待ちしておりました」
+
+白い手袋の紳士があなたの手を取る。
+その手は<span class="danger">氷のように冷たかった</span>。
+
+気づけばあなたも踊っている。
+止められない。足が勝手に動く。
+
+踊り続ける。<span class="danger">永遠に。</span>
+
+百年前から続く舞踏会の、新しい参加者として。</div>
+        ${gameOverHTML()}
+      `;
+    }
+  },
+
+  // ============ SCENE 7: 主人の寝室 ============
+  scene7: {
+    render(container) {
+      container.innerHTML = `
+        <div id="scene-indicator">― 第五章 ―</div>
+        <div class="narrative">
+<span class="highlight">【主人の寝室】</span>
+
+冷気の源は、この部屋だった。
+窓が少しだけ開いており、夜風が入り込んでいる。
+
+大きな天蓋付きベッド。
+壁には<span class="danger">大きな鏡</span>——日記の忠告が頭をよぎる。
+<span class="eerie">「二階の鏡を覗いてはならない」</span>
+
+部屋の隅に<span class="highlight">書斎机</span>がある。引き出しがついている。
+反対側には<span class="highlight">大きなクローゼット</span>。
+
+鍵はこの部屋のどこかにあるはずだ。</div>
+        <div class="choices">
+          <button class="choice-btn" onclick="goTo('scene9')">
+            <span class="choice-label">A.</span> 机の引き出しを開ける
+          </button>
+          <button class="choice-btn" onclick="goTo('scene7_dead')">
+            <span class="choice-label">B.</span> クローゼットを開ける
+          </button>
+        </div>
+      `;
+    }
+  },
+
+  scene7_dead: {
+    gameover: true,
+    render(container) {
+      container.innerHTML = `
+        <div class="narrative">
+クローゼットの取っ手に手をかけ、引き開ける。
+
+中は暗い。
+奥行きが異常に深い。普通のクローゼットではない。
+
+<span class="eerie">古い衣服の間から、白い顔がこちらを見ていた。</span>
+
+「やっと……<span class="danger">見つけた</span>」
+
+クローゼットの中から伸びてきた無数の手が、
+あなたを暗闇の奥へと引きずり込んだ。
+
+扉が静かに閉まる。
+
+<span class="eerie">クローゼットの中に、衣服が一着増えた。</span></div>
+        ${gameOverHTML()}
+      `;
+    }
+  },
+
+  // ============ SCENE 8: 子供部屋 ============
+  scene8: {
+    render(container) {
+      container.innerHTML = `
+        <div id="scene-indicator">― 第五章 ―</div>
+        <div class="narrative">
+<span class="highlight">【子供部屋】</span>
+
+小さなベッド、木馬、積み木。
+かつてこの館に子供がいたのだろうか。
+
+棚の上に<span class="highlight">古いオルゴール</span>が置かれている。
+繊細な装飾が施されたアンティークだ。
+
+ベッドの下に<span class="eerie">何かの影</span>が見える。
+
+部屋全体が、時間の止まったような静寂に包まれている。</div>
+        <div class="choices">
+          <button class="choice-btn" onclick="goTo('scene8_dead')">
+            <span class="choice-label">A.</span> オルゴールのネジを回してみる
+          </button>
+          <button class="choice-btn" onclick="goTo('scene10')">
+            <span class="choice-label">B.</span> ベッドの下を覗いてみる
+          </button>
+        </div>
+      `;
+    }
+  },
+
+  scene8_dead: {
+    gameover: true,
+    render(container) {
+      container.innerHTML = `
+        <div class="narrative">
+オルゴールのネジを回す。
+<span class="eerie">澄んだ旋律</span>が部屋に響き渡る。
+
+美しいメロディ。聞いたことのある子守歌……
+
+「ねえ、<span class="eerie">いっしょにあそぼう</span>？」
+
+振り返ると、<span class="danger">小さな女の子がそこに立っていた</span>。
+白いワンピース。長い黒髪。
+
+だが顔は——<span class="danger">顔がない</span>。
+
+「ずっとここにいてね。
+<span class="danger">ずっと、ずっと、ずっと……</span>」
+
+オルゴールの音色が永遠に鳴り続ける。
+あなたの意識は、もう戻らなかった。</div>
+        ${gameOverHTML()}
+      `;
+    }
+  },
+
+  // ============ SCENE 9: 銀の鍵を発見 ============
+  scene9: {
+    render(container) {
+      container.innerHTML = `
+        <div id="scene-indicator">― 第六章 ―</div>
+        <div class="narrative">
+<span class="highlight">【銀の鍵】</span>
+
+引き出しを開ける。
+中に、<span class="highlight">ビロードの布に包まれた銀の鍵</span>があった。
+
+月光を受けて鈍く輝くその鍵。
+日記に書かれていた脱出の鍵に違いない。
+
+鍵を握りしめた瞬間、
+<span class="danger">館全体が震えた</span>。
+
+壁が軋む。天井から埃が降る。
+この館が、あなたを逃すまいとしているかのように。
+
+<span class="danger">急がなければ。</span>
+一階の玄関まで戻る必要がある。</div>
+        <div class="choices">
+          <button class="choice-btn" onclick="goTo('scene9_dead')">
+            <span class="choice-label">A.</span> 急いで階段を駆け下りる
+          </button>
+          <button class="choice-btn" onclick="goTo('scene11')">
+            <span class="choice-label">B.</span> 逸る気持ちを抑え、慎重に一段ずつ降りる
+          </button>
+        </div>
+      `;
+    }
+  },
+
+  scene9_dead: {
+    gameover: true,
+    render(container) {
+      container.innerHTML = `
+        <div class="narrative">
+一秒でも早くこの館を出たい。
+階段を全力で駆け下りる。
+
+<span class="danger">五段目が、崩れた。</span>
+
+朽ちた木が体重に耐えきれず、砕け散る。
+体が前のめりに投げ出される。
+
+階段を転げ落ち、壁に叩きつけられる。
+銀の鍵が手から零れ、暗闇に消えていく。
+
+カラン、カラン、と鍵の音が遠ざかっていく。
+
+朦朧とする意識の中、
+<span class="eerie">誰かが近づいてくる足音</span>が聞こえた。</div>
+        ${gameOverHTML()}
+      `;
+    }
+  },
+
+  // ============ SCENE 10: 隠し通路（キッチン or 子供部屋から） ============
+  scene10: {
+    render(container) {
+      container.innerHTML = `
+        <div id="scene-indicator">― 第六章 ―</div>
+        <div class="narrative">
+<span class="highlight">【脱出路の発見】</span>
+
+慎重に進んでいくと、
+通路の先に<span class="highlight">古い木の扉</span>が現れた。
+
+扉の隙間から、<span class="highlight">夜の冷たい外気</span>が流れ込んでくる。
+微かに<span class="eerie">虫の鳴き声</span>が聞こえる。
+
+外だ。この先は、外の世界だ。
+
+だがその瞬間、背後から<span class="danger">何かが近づく気配</span>がした。
+ひたひたという、裸足が石の床を踏む音。
+
+振り返るべきか。
+それとも、一刻も早く扉を開けるべきか。</div>
+        <div class="choices">
+          <button class="choice-btn" onclick="goTo('scene12')">
+            <span class="choice-label">A.</span> 振り返らず、扉を開けて外へ飛び出す
+          </button>
+          <button class="choice-btn" onclick="goTo('scene10_dead')">
+            <span class="choice-label">B.</span> 振り返って、何がいるのか確かめる
+          </button>
+        </div>
+      `;
+    }
+  },
+
+  scene10_dead: {
+    gameover: true,
+    render(container) {
+      container.innerHTML = `
+        <div class="narrative">
+好奇心に負けて、振り返る。
+
+<span class="eerie">ろうそくの灯りが照らし出したのは——</span>
+
+<span class="danger">自分自身だった。</span>
+
+もう一人のあなたが、暗闇の中に立っている。
+同じ服。同じ顔。
+だがその表情は、あなたとは違う。
+
+「もう遅い。<span class="danger">見てしまったね</span>」
+
+もう一人のあなたが微笑む。
+足元から影が伸び、あなたの体を包み込んでいく。
+
+冷たい。暗い。
+自分がどちらの「自分」なのか、
+もう分からなくなった。</div>
+        ${gameOverHTML()}
+      `;
+    }
+  },
+
+  // ============ SCENE 11: 玄関ホール（銀の鍵で脱出） ============
+  scene11: {
+    render(container) {
+      container.innerHTML = `
+        <div id="scene-indicator">― 最終章 ―</div>
+        <div class="narrative">
+<span class="highlight">【玄関ホール——最後の選択】</span>
+
+使用人の階段を慎重に降り、玄関ホールに戻ってきた。
+
+<span class="danger">館が激しく揺れている。</span>
+シャンデリアが落下し、床に突き刺さる。
+壁にヒビが走り、肖像画が次々と落ちていく。
+
+玄関の扉の前に立つ。
+震える手で<span class="highlight">銀の鍵</span>を鍵穴に差し込む。
+
+カチリ。
+
+<span class="highlight">鍵が回った。</span>
+
+だがその瞬間、背後に<span class="danger">おぞましい気配</span>を感じた。
+
+振り返りたい衝動に駆られる。
+この館の「主」が、そこにいる気がする。</div>
+        <div class="choices">
+          <button class="choice-btn" onclick="goTo('scene12')">
+            <span class="choice-label">A.</span> 振り返らず、扉を開けて外へ飛び出す
+          </button>
+          <button class="choice-btn" onclick="goTo('scene11_dead')">
+            <span class="choice-label">B.</span> 最後に振り返って、この館の真実を見届ける
+          </button>
+        </div>
+      `;
+    }
+  },
+
+  scene11_dead: {
+    gameover: true,
+    render(container) {
+      container.innerHTML = `
+        <div class="narrative">
+ここまで来たのだ。
+この館の正体を、この目で確かめたい。
+
+あなたは振り返った。
+
+<span class="danger">そこには、この館で死んだ全ての者がいた。</span>
+
+何十人もの亡霊が、虚ろな目であなたを見つめている。
+彼らもまた、かつてあなたと同じように
+この館に迷い込んだ者たちだった。
+
+「仲間が増えた」
+
+<span class="eerie">彼らは一斉に微笑んだ。</span>
+
+あなたの手から銀の鍵が零れ落ちる。
+もう、扉を開ける気力は残っていなかった。
+
+<span class="danger">振り返っては、いけなかったのだ。</span></div>
+        ${gameOverHTML()}
+      `;
+    }
+  },
+
+  // ============ SCENE 12: 脱出成功！ ============
+  scene12: {
+    clear: true,
+    render(container) {
+      container.innerHTML = `
+        <div id="scene-indicator">― 終章 ―</div>
+        <div class="narrative">
+振り返らない。
+
+背後で何かが叫んでいる。
+怒りの咆哮が館全体を揺るがす。
+だが、<span class="highlight">振り返らない</span>。
+
+扉を押し開け、外へ飛び出す。
+
+<span class="highlight">冷たい夜の空気が肌を刺す。</span>
+生きている。外に出られた。
+
+走る。振り返らずに、ただ走る。
+
+百メートルほど走ったところで、
+背後で<span class="danger">凄まじい轟音</span>が響いた。
+
+ようやく振り返ると——
+
+<span class="highlight">洋館が、崩れ落ちていくところだった。</span>
+
+百年の時を経た館が、瓦礫となって崩壊していく。
+もうもうと立ち上る土煙の向こうに、
+<span class="eerie">東の空が白み始めていた</span>。
+
+夜明けだ。
+
+あなたは生き延びた。
+
+<div class="separator">* * *</div></div>
+        <div class="clear-text">― 脱 出 成 功 ―</div>
+        <p style="text-align:center; color: rgba(180,160,120,0.6); margin-top: 0.5rem; font-size: 0.85rem; letter-spacing: 0.2em;">CONGRATULATIONS</p>
+        <p style="text-align:center; color: rgba(180,160,120,0.4); margin-top: 1.5rem; font-size: 0.8rem; line-height: 1.8;">
+          あなたは古い洋館からの脱出に成功しました。<br>
+          他のルートも試してみますか？
+        </p>
+        <button class="restart-btn" onclick="goTo('title')">もう一度挑戦する</button>
+      `;
+    }
+  }
+};
+
+// ==========================================
+//  Game Engine
+// ==========================================
+
+function gameOverHTML() {
+  return `
+    <div class="separator">* * *</div>
+    <div class="game-over-text">― GAME OVER ―</div>
+    <button class="restart-btn" onclick="goTo('title')">最初からやり直す</button>
+  `;
+}
+
+function goTo(sceneId) {
+  const scene = scenes[sceneId];
+  if (!scene) return;
+
+  const container = document.getElementById('game-content');
+  const overlay = document.getElementById('overlay');
+
+  if (scene.gameover) {
+    // Game over: fade to black, then show
+    overlay.classList.add('active');
+    setTimeout(() => {
+      scene.render(container);
+      container.classList.add('shake');
+      setTimeout(() => container.classList.remove('shake'), 500);
+      overlay.classList.remove('active');
+    }, 800);
+  } else if (scene.clear) {
+    // Victory: brief white flash
+    overlay.style.background = 'rgba(255,250,230,0.3)';
+    overlay.classList.add('active');
+    setTimeout(() => {
+      scene.render(container);
+      overlay.classList.remove('active');
+      setTimeout(() => { overlay.style.background = '#000'; }, 500);
+    }, 600);
+  } else {
+    // Normal transition
+    container.style.opacity = '0';
+    setTimeout(() => {
+      scene.render(container);
+      container.style.opacity = '1';
+    }, 300);
+  }
+
+  // Scroll to top
+  document.getElementById('game-container').scrollTop = 0;
+}
+
+// ==========================================
+//  Dust Particles
+// ==========================================
+
+function createDust() {
+  for (let i = 0; i < 15; i++) {
+    const dust = document.createElement('div');
+    dust.className = 'dust';
+    dust.style.left = Math.random() * 100 + 'vw';
+    dust.style.animationDuration = (8 + Math.random() * 12) + 's';
+    dust.style.animationDelay = (Math.random() * 10) + 's';
+    dust.style.width = (2 + Math.random() * 2) + 'px';
+    dust.style.height = dust.style.width;
+    document.body.appendChild(dust);
+  }
+}
+
+// ==========================================
+//  Initialize
+// ==========================================
+
+document.addEventListener('DOMContentLoaded', () => {
+  const container = document.getElementById('game-content');
+  container.style.transition = 'opacity 0.3s ease';
+  createDust();
+  goTo('title');
+});
+</script>
+</body>
+</html>
