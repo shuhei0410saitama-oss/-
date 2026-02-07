@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1分間タイピング練習機</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    background: #0f0f1a;
+    color: #e0e0e0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 720px;
+    padding: 2rem;
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 1.6rem;
+    margin-bottom: 1.5rem;
+    color: #7ec8e3;
+    letter-spacing: 0.05em;
+  }
+
+  /* Stats bar */
+  .stats {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 1.5rem;
+    gap: 0.5rem;
+  }
+
+  .stat-box {
+    background: #1a1a2e;
+    border-radius: 10px;
+    padding: 0.8rem 1.2rem;
+    text-align: center;
+    flex: 1;
+    border: 1px solid #2a2a4a;
+  }
+
+  .stat-box .label {
+    font-size: 0.75rem;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.3rem;
+  }
+
+  .stat-box .value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #7ec8e3;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stat-box .value.timer {
+    color: #f0c040;
+  }
+
+  .stat-box .value.timer.urgent {
+    color: #e05050;
+    animation: pulse 0.5s ease-in-out infinite alternate;
+  }
+
+  @keyframes pulse {
+    to { opacity: 0.5; }
+  }
+
+  /* Word display */
+  .word-display {
+    background: #1a1a2e;
+    border: 2px solid #2a2a4a;
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    margin-bottom: 1.2rem;
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    transition: border-color 0.15s;
+  }
+
+  .word-display.correct {
+    border-color: #40c070;
+  }
+
+  .word-display.wrong {
+    border-color: #e05050;
+  }
+
+  .current-word {
+    font-size: 2.8rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    font-family: 'Courier New', Courier, monospace;
+    display: flex;
+  }
+
+  .current-word .char {
+    transition: color 0.05s;
+  }
+
+  .current-word .char.correct {
+    color: #40c070;
+  }
+
+  .current-word .char.wrong {
+    color: #e05050;
+    text-decoration: underline;
+  }
+
+  .current-word .char.pending {
+    color: #555;
+  }
+
+  .current-word .char.cursor {
+    color: #e0e0e0;
+    border-bottom: 3px solid #7ec8e3;
+  }
+
+  .next-word {
+    font-size: 1.1rem;
+    color: #555;
+    letter-spacing: 0.08em;
+  }
+
+  /* Input */
+  .input-row {
+    display: flex;
+    gap: 0.8rem;
+    margin-bottom: 1.5rem;
+  }
+
+  #typing-input {
+    flex: 1;
+    padding: 0.9rem 1.2rem;
+    font-size: 1.3rem;
+    font-family: 'Courier New', Courier, monospace;
+    background: #12121f;
+    border: 2px solid #2a2a4a;
+    border-radius: 10px;
+    color: #e0e0e0;
+    outline: none;
+    letter-spacing: 0.06em;
+    transition: border-color 0.15s;
+  }
+
+  #typing-input:focus {
+    border-color: #7ec8e3;
+  }
+
+  #typing-input:disabled {
+    opacity: 0.4;
+  }
+
+  /* Buttons */
+  .btn {
+    padding: 0.9rem 1.8rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    letter-spacing: 0.04em;
+  }
+
+  .btn:active { transform: scale(0.96); }
+
+  .btn-start {
+    background: #7ec8e3;
+    color: #0f0f1a;
+  }
+
+  .btn-start:hover { background: #5db8d8; }
+
+  .btn-reset {
+    background: #2a2a4a;
+    color: #aaa;
+  }
+
+  .btn-reset:hover { background: #3a3a5a; }
+
+  /* Progress bar */
+  .progress-wrap {
+    background: #1a1a2e;
+    border-radius: 6px;
+    height: 6px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #7ec8e3, #40c070);
+    width: 100%;
+    transition: width 0.25s linear;
+    border-radius: 6px;
+  }
+
+  /* Result overlay */
+  .result-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 15, 26, 0.92);
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+  }
+
+  .result-overlay.show {
+    display: flex;
+  }
+
+  .result-card {
+    background: #1a1a2e;
+    border: 2px solid #2a2a4a;
+    border-radius: 16px;
+    padding: 2.5rem 3rem;
+    text-align: center;
+    max-width: 420px;
+    width: 90%;
+  }
+
+  .result-card h2 {
+    font-size: 1.4rem;
+    color: #7ec8e3;
+    margin-bottom: 1.5rem;
+  }
+
+  .result-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .result-item {
+    background: #12121f;
+    border-radius: 10px;
+    padding: 1rem;
+  }
+
+  .result-item .r-label {
+    font-size: 0.7rem;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.4rem;
+  }
+
+  .result-item .r-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #e0e0e0;
+  }
+
+  .result-item .r-value.highlight {
+    color: #f0c040;
+  }
+
+  .result-card .btn {
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+
+  /* Instruction */
+  .instruction {
+    text-align: center;
+    color: #555;
+    font-size: 0.85rem;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>&#9000; 1分間タイピング練習機</h1>
+
+  <div class="stats">
+    <div class="stat-box">
+      <div class="label">残り時間</div>
+      <div class="value timer" id="timer">60</div>
+    </div>
+    <div class="stat-box">
+      <div class="label">入力文字数</div>
+      <div class="value" id="char-count">0</div>
+    </div>
+    <div class="stat-box">
+      <div class="label">正解単語</div>
+      <div class="value" id="word-count">0</div>
+    </div>
+    <div class="stat-box">
+      <div class="label">正確率</div>
+      <div class="value" id="accuracy">100%</div>
+    </div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-bar" id="progress-bar"></div>
+  </div>
+
+  <div class="word-display" id="word-display">
+    <div class="current-word" id="current-word">START</div>
+    <div class="next-word" id="next-word"></div>
+  </div>
+
+  <div class="input-row">
+    <input type="text" id="typing-input" placeholder="ここに入力..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" disabled>
+    <button class="btn btn-start" id="start-btn">Start</button>
+    <button class="btn btn-reset" id="reset-btn">Reset</button>
+  </div>
+
+  <p class="instruction">
+    Startボタンを押すとカウントダウン開始。<br>
+    表示される英単語を入力してスペースまたはEnterで確定。<br>
+    1分間でどれだけ打てるか挑戦しよう！
+  </p>
+</div>
+
+<!-- Result overlay -->
+<div class="result-overlay" id="result-overlay">
+  <div class="result-card">
+    <h2>結果発表</h2>
+    <div class="result-grid">
+      <div class="result-item">
+        <div class="r-label">入力文字数</div>
+        <div class="r-value highlight" id="r-chars">0</div>
+      </div>
+      <div class="result-item">
+        <div class="r-label">正解単語数</div>
+        <div class="r-value" id="r-words">0</div>
+      </div>
+      <div class="result-item">
+        <div class="r-label">WPM</div>
+        <div class="r-value" id="r-wpm">0</div>
+      </div>
+      <div class="result-item">
+        <div class="r-label">正確率</div>
+        <div class="r-value" id="r-accuracy">0%</div>
+      </div>
+    </div>
+    <button class="btn btn-start" id="retry-btn">もう一度</button>
+  </div>
+</div>
+
+<script>
+const WORDS = [
+  "the","be","to","of","and","a","in","that","have","I","it","for","not","on",
+  "with","he","as","you","do","at","this","but","his","by","from","they","we",
+  "her","she","or","an","will","my","one","all","would","there","their","what",
+  "so","up","out","if","about","who","get","which","go","me","when","make",
+  "can","like","time","no","just","him","know","take","people","into","year",
+  "your","good","some","could","them","see","other","than","then","now","look",
+  "only","come","its","over","think","also","back","after","use","two","how",
+  "our","work","first","well","way","even","new","want","because","any","these",
+  "give","day","most","us","great","big","small","old","long","much","world",
+  "very","after","right","too","call","still","find","here","thing","many",
+  "let","help","line","turn","move","live","real","left","same","open","begin",
+  "next","home","play","run","read","hand","high","place","keep","house","point",
+  "start","might","story","far","head","end","life","city","school","book",
+  "room","food","water","name","four","five","six","seven","eight","nine","ten",
+  "dog","cat","fish","tree","blue","red","green","black","white","happy",
+  "fast","slow","hard","soft","dark","light","cold","hot","young","best",
+  "test","code","type","key","data","file","app","web","page","form",
+  "size","plan","game","team","done","stop","free","love","cool","nice",
+  "idea","easy","full","step","side","part","fact","sure","link","copy",
+  "show","send","save","list","view","edit","help","pick","sort","drop"
+];
+
+let state = {
+  running: false,
+  timeLeft: 60,
+  timer: null,
+  currentWord: '',
+  nextWord: '',
+  correctChars: 0,
+  correctWords: 0,
+  totalKeystrokes: 0,
+  correctKeystrokes: 0,
+  wordQueue: [],
+};
+
+const $ = id => document.getElementById(id);
+
+const timerEl       = $('timer');
+const charCountEl   = $('char-count');
+const wordCountEl   = $('word-count');
+const accuracyEl    = $('accuracy');
+const progressBar   = $('progress-bar');
+const wordDisplay   = $('word-display');
+const currentWordEl = $('current-word');
+const nextWordEl    = $('next-word');
+const input         = $('typing-input');
+const startBtn      = $('start-btn');
+const resetBtn      = $('reset-btn');
+const overlay       = $('result-overlay');
+const retryBtn      = $('retry-btn');
+
+function pickWord() {
+  if (state.wordQueue.length < 2) {
+    const shuffled = [...WORDS].sort(() => Math.random() - 0.5);
+    state.wordQueue.push(...shuffled);
+  }
+  return state.wordQueue.shift();
+}
+
+function renderWord(word, typed) {
+  let html = '';
+  for (let i = 0; i < word.length; i++) {
+    let cls = 'pending';
+    if (i < typed.length) {
+      cls = typed[i] === word[i] ? 'correct' : 'wrong';
+    } else if (i === typed.length) {
+      cls = 'cursor';
+    }
+    html += `<span class="char ${cls}">${word[i]}</span>`;
+  }
+  currentWordEl.innerHTML = html;
+}
+
+function updateStats() {
+  charCountEl.textContent = state.correctChars;
+  wordCountEl.textContent = state.correctWords;
+  const acc = state.totalKeystrokes === 0
+    ? 100
+    : Math.round((state.correctKeystrokes / state.totalKeystrokes) * 100);
+  accuracyEl.textContent = acc + '%';
+}
+
+function advanceWord() {
+  state.currentWord = state.nextWord || pickWord();
+  state.nextWord = pickWord();
+  renderWord(state.currentWord, '');
+  nextWordEl.textContent = 'next: ' + state.nextWord;
+  input.value = '';
+}
+
+function startGame() {
+  state.running = true;
+  state.timeLeft = 60;
+  state.correctChars = 0;
+  state.correctWords = 0;
+  state.totalKeystrokes = 0;
+  state.correctKeystrokes = 0;
+  state.wordQueue = [];
+
+  timerEl.textContent = '60';
+  timerEl.classList.remove('urgent');
+  progressBar.style.width = '100%';
+  updateStats();
+  advanceWord();
+
+  input.disabled = false;
+  input.focus();
+  startBtn.disabled = true;
+
+  state.timer = setInterval(() => {
+    state.timeLeft--;
+    timerEl.textContent = state.timeLeft;
+    progressBar.style.width = ((state.timeLeft / 60) * 100) + '%';
+
+    if (state.timeLeft <= 10) {
+      timerEl.classList.add('urgent');
+    }
+
+    if (state.timeLeft <= 0) {
+      endGame();
+    }
+  }, 1000);
+}
+
+function endGame() {
+  state.running = false;
+  clearInterval(state.timer);
+  input.disabled = true;
+  startBtn.disabled = false;
+
+  const acc = state.totalKeystrokes === 0
+    ? 100
+    : Math.round((state.correctKeystrokes / state.totalKeystrokes) * 100);
+
+  $('r-chars').textContent = state.correctChars;
+  $('r-words').textContent = state.correctWords;
+  $('r-wpm').textContent = state.correctWords;
+  $('r-accuracy').textContent = acc + '%';
+
+  overlay.classList.add('show');
+}
+
+function resetGame() {
+  state.running = false;
+  clearInterval(state.timer);
+  state.timeLeft = 60;
+  state.correctChars = 0;
+  state.correctWords = 0;
+  state.totalKeystrokes = 0;
+  state.correctKeystrokes = 0;
+  state.wordQueue = [];
+
+  timerEl.textContent = '60';
+  timerEl.classList.remove('urgent');
+  progressBar.style.width = '100%';
+  currentWordEl.textContent = 'START';
+  nextWordEl.textContent = '';
+  input.value = '';
+  input.disabled = true;
+  startBtn.disabled = false;
+  updateStats();
+  overlay.classList.remove('show');
+}
+
+// Input handling
+input.addEventListener('input', () => {
+  if (!state.running) return;
+
+  const typed = input.value;
+  renderWord(state.currentWord, typed);
+
+  // Flash border feedback
+  wordDisplay.classList.remove('correct', 'wrong');
+  if (typed.length > 0) {
+    const lastChar = typed[typed.length - 1];
+    const expectedChar = state.currentWord[typed.length - 1];
+    if (lastChar === expectedChar) {
+      wordDisplay.classList.add('correct');
+    } else {
+      wordDisplay.classList.add('wrong');
+    }
+    setTimeout(() => wordDisplay.classList.remove('correct', 'wrong'), 150);
+  }
+});
+
+input.addEventListener('keydown', (e) => {
+  if (!state.running) return;
+
+  if (e.key === ' ' || e.key === 'Enter') {
+    e.preventDefault();
+    const typed = input.value;
+
+    if (typed.length === 0) return;
+
+    // Count keystrokes for this word
+    for (let i = 0; i < typed.length; i++) {
+      state.totalKeystrokes++;
+      if (i < state.currentWord.length && typed[i] === state.currentWord[i]) {
+        state.correctKeystrokes++;
+      }
+    }
+    // Count the space/enter as a keystroke too
+    state.totalKeystrokes++;
+    state.correctKeystrokes++;
+
+    if (typed === state.currentWord) {
+      state.correctChars += state.currentWord.length;
+      state.correctWords++;
+    }
+
+    updateStats();
+    advanceWord();
+  }
+
+  // Count backspace
+  if (e.key === 'Backspace') {
+    // no penalty, just natural typing
+  }
+});
+
+startBtn.addEventListener('click', startGame);
+resetBtn.addEventListener('click', resetGame);
+retryBtn.addEventListener('click', () => {
+  overlay.classList.remove('show');
+  startGame();
+});
+
+// Allow starting with Enter when input is focused
+document.addEventListener('keydown', (e) => {
+  if (!state.running && e.key === 'Enter' && !startBtn.disabled) {
+    startGame();
+  }
+});
+</script>
+</body>
+</html>
