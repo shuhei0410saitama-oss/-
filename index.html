@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>やる気アップ名言マシン</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Meiryo", sans-serif;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .bg {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      transition: background 0.8s ease;
+    }
+
+    .bg.theme-warm {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    .bg.theme-ocean {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+
+    .bg.theme-sunset {
+      background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    }
+
+    .bg.theme-forest {
+      background: linear-gradient(135deg, #38ef7d 0%, #11998e 100%);
+    }
+
+    .bg.theme-night {
+      background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+    }
+
+    .particles {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    .particle {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.15);
+      animation: float linear infinite;
+    }
+
+    @keyframes float {
+      0% {
+        transform: translateY(100vh) rotate(0deg);
+        opacity: 0;
+      }
+      10% {
+        opacity: 1;
+      }
+      90% {
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(-10vh) rotate(720deg);
+        opacity: 0;
+      }
+    }
+
+    .container {
+      text-align: center;
+      padding: 2rem;
+      max-width: 700px;
+      width: 90%;
+    }
+
+    .title {
+      font-size: 1.6rem;
+      color: rgba(255, 255, 255, 0.9);
+      margin-bottom: 2rem;
+      letter-spacing: 0.1em;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .name-setup {
+      margin-bottom: 2rem;
+    }
+
+    .name-setup input {
+      padding: 0.7rem 1.2rem;
+      font-size: 1.1rem;
+      border: 2px solid rgba(255, 255, 255, 0.4);
+      border-radius: 50px;
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+      text-align: center;
+      outline: none;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+      width: 220px;
+    }
+
+    .name-setup input::placeholder {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .name-setup input:focus {
+      border-color: rgba(255, 255, 255, 0.8);
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .name-label {
+      display: block;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 24px;
+      padding: 2.5rem 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+      min-height: 220px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
+      animation: shimmer 6s ease-in-out infinite;
+    }
+
+    @keyframes shimmer {
+      0%, 100% { transform: translate(-30%, -30%); }
+      50% { transform: translate(30%, 30%); }
+    }
+
+    .quote-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      opacity: 0;
+      transform: scale(0);
+      transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      position: relative;
+      z-index: 1;
+    }
+
+    .quote-icon.show {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .quote-text {
+      font-size: 1.35rem;
+      color: #fff;
+      line-height: 1.8;
+      margin-bottom: 1rem;
+      font-weight: 500;
+      text-shadow: 0 1px 6px rgba(0, 0, 0, 0.15);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.6s ease;
+      position: relative;
+      z-index: 1;
+    }
+
+    .quote-text.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .quote-author {
+      font-size: 0.95rem;
+      color: rgba(255, 255, 255, 0.75);
+      font-style: italic;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.6s ease 0.2s;
+      position: relative;
+      z-index: 1;
+    }
+
+    .quote-author.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .encouragement {
+      font-size: 1.2rem;
+      color: #fff;
+      margin-bottom: 2rem;
+      opacity: 0;
+      transform: scale(0.8);
+      transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.5s;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+      min-height: 2rem;
+    }
+
+    .encouragement.show {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .btn {
+      padding: 1rem 3rem;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #fff;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      background: linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.1));
+      backdrop-filter: blur(10px);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      transition: all 0.3s ease;
+      letter-spacing: 0.08em;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.15) 50%, transparent 60%);
+      transform: translateX(-100%);
+      transition: transform 0.6s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      border-color: rgba(255, 255, 255, 0.6);
+    }
+
+    .btn:hover::after {
+      transform: translateX(100%);
+    }
+
+    .btn:active {
+      transform: translateY(-1px);
+    }
+
+    .counter {
+      margin-top: 1.5rem;
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 0.8rem;
+    }
+
+    @keyframes confetti-fall {
+      0% {
+        transform: translateY(-10px) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(100vh) rotate(720deg);
+        opacity: 0;
+      }
+    }
+
+    .confetti {
+      position: fixed;
+      top: 0;
+      width: 10px;
+      height: 10px;
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    @media (max-width: 600px) {
+      .title {
+        font-size: 1.3rem;
+      }
+      .quote-text {
+        font-size: 1.1rem;
+      }
+      .card {
+        padding: 2rem 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg" id="bg"></div>
+
+<div class="particles" id="particles"></div>
+
+<div class="container">
+  <h1 class="title">やる気アップ名言マシン</h1>
+
+  <div class="name-setup">
+    <label class="name-label">あなたの名前を入力してね</label>
+    <input type="text" id="nameInput" placeholder="名前" />
+  </div>
+
+  <div class="card" id="card">
+    <div class="quote-icon" id="quoteIcon"></div>
+    <div class="quote-text" id="quoteText">ボタンを押して、今日の一言をもらおう！</div>
+    <div class="quote-author" id="quoteAuthor"></div>
+  </div>
+
+  <div class="encouragement" id="encouragement"></div>
+
+  <button class="btn" id="btn" onclick="showQuote()">今日のやる気をもらう</button>
+
+  <div class="counter" id="counter"></div>
+</div>
+
+<script>
+  const quotes = [
+    { text: "為せば成る、為さねば成らぬ何事も。", author: "上杉鷹山", icon: "🏯" },
+    { text: "千里の道も一歩から。", author: "老子", icon: "👣" },
+    { text: "失敗は成功のもと。", author: "ことわざ", icon: "🌱" },
+    { text: "継続は力なり。", author: "ことわざ", icon: "💪" },
+    { text: "今日できることを明日に延ばすな。", author: "ベンジャミン・フランクリン", icon: "⏰" },
+    { text: "人生とは自転車のようなものだ。倒れないようにするには走り続けなければならない。", author: "アインシュタイン", icon: "🚴" },
+    { text: "夢を見ることができれば、それは実現できる。", author: "ウォルト・ディズニー", icon: "✨" },
+    { text: "行動は全ての成功の基本的な鍵である。", author: "パブロ・ピカソ", icon: "🔑" },
+    { text: "最も暗い夜でも、星は輝いている。", author: "ドストエフスキー", icon: "🌟" },
+    { text: "七転び八起き。", author: "ことわざ", icon: "🎋" },
+    { text: "天才とは1%のひらめきと99%の努力である。", author: "エジソン", icon: "💡" },
+    { text: "壁というのは、できる人にしかやってこない。", author: "イチロー", icon: "⚾" },
+    { text: "小さいことを積み重ねることが、とんでもないところへ行くただ一つの道。", author: "イチロー", icon: "🏔️" },
+    { text: "人にできて、きみだけにできないことなんてあるもんか。", author: "ドラえもん", icon: "🤖" },
+    { text: "あきらめたらそこで試合終了ですよ。", author: "安西先生（スラムダンク）", icon: "🏀" },
+    { text: "努力した者が全て報われるとは限らん。しかし、成功した者は皆すべからく努力しておる。", author: "鴨川会長（はじめの一歩）", icon: "🥊" },
+    { text: "明日やろうはバカ野郎。", author: "ことわざ（意訳）", icon: "🔥" },
+    { text: "やってみせ、言って聞かせて、させてみて、ほめてやらねば、人は動かじ。", author: "山本五十六", icon: "⚓" },
+    { text: "勝ちに不思議の勝ちあり、負けに不思議の負けなし。", author: "野村克也", icon: "📋" },
+    { text: "100点は無理かもしれん。でもMAXなら出せるやろ。", author: "松本人志", icon: "😎" },
+
+    { text: "月曜日が嫌いなんじゃない。働くのが嫌いなだけだ。…いや、月曜も嫌いだわ。", author: "世界中の社会人", icon: "😩" },
+    { text: "やる気スイッチ、どこにあるか知ってる？布団の中だよ。", author: "全人類", icon: "🛏️" },
+    { text: "今日も一日がんばるぞい！…って言いながらもう昼だった。", author: "あるある", icon: "🕐" },
+    { text: "ダイエットは明日から。勉強も明日から。ところで明日っていつ？", author: "哲学者（自称）", icon: "🤔" },
+    { text: "エラーが出た。でも大丈夫、コンパイル通った時の喜びが倍になるだけさ。", author: "全エンジニア", icon: "🐛" },
+    { text: "バグじゃない、仕様だ。", author: "伝説のエンジニア", icon: "🧑‍💻" },
+    { text: "「あとちょっと」が口癖のエンジニアを信じるな。", author: "プロジェクトマネージャー", icon: "📊" },
+    { text: "コーヒーがなければ、コードは書けない。これは科学的事実。", author: "カフェイン中毒者", icon: "☕" },
+    { text: "人生に必要なもの。Wi-Fi、コーヒー、そして少しの勇気。", author: "現代人の知恵", icon: "📶" },
+    { text: "「もう無理」と思った時、あと5分だけやってみよう。…5分後「やっぱ無理」", author: "正直者", icon: "😂" },
+  ];
+
+  const encouragements = [
+    "{name}、今日もきっといい日になるよ！",
+    "{name}、あなたならできる！全力で応援してるよ！",
+    "{name}、最高の一日にしよう！",
+    "{name}、世界はあなたの味方だよ！",
+    "さあ{name}、今日も輝いていこう！",
+    "{name}、昨日より確実に成長してるよ！",
+    "{name}、無理しなくていい。でもあなたはすごい！",
+    "{name}、コーヒー片手に今日も頑張ろう！",
+    "{name}、あなたのペースで大丈夫！",
+    "{name}、今日のあなたが一番カッコいい！",
+  ];
+
+  const themes = ["", "theme-warm", "theme-ocean", "theme-sunset", "theme-forest", "theme-night"];
+
+  let clickCount = 0;
+  let lastIndex = -1;
+
+  // Load saved name
+  const savedName = localStorage.getItem("motivationalMachineName");
+  if (savedName) {
+    document.getElementById("nameInput").value = savedName;
+  }
+
+  // Save name on input
+  document.getElementById("nameInput").addEventListener("input", function () {
+    localStorage.setItem("motivationalMachineName", this.value);
+  });
+
+  // Create floating particles
+  function createParticles() {
+    const container = document.getElementById("particles");
+    for (let i = 0; i < 15; i++) {
+      const p = document.createElement("div");
+      p.classList.add("particle");
+      const size = Math.random() * 20 + 5;
+      p.style.width = size + "px";
+      p.style.height = size + "px";
+      p.style.left = Math.random() * 100 + "%";
+      p.style.animationDuration = Math.random() * 10 + 8 + "s";
+      p.style.animationDelay = Math.random() * 10 + "s";
+      container.appendChild(p);
+    }
+  }
+  createParticles();
+
+  function launchConfetti() {
+    const colors = ["#ff6b6b", "#feca57", "#48dbfb", "#ff9ff3", "#54a0ff", "#5f27cd", "#01a3a4", "#f368e0"];
+    for (let i = 0; i < 30; i++) {
+      const confetti = document.createElement("div");
+      confetti.classList.add("confetti");
+      confetti.style.left = Math.random() * 100 + "vw";
+      confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+      confetti.style.width = Math.random() * 10 + 5 + "px";
+      confetti.style.height = Math.random() * 10 + 5 + "px";
+      confetti.style.borderRadius = Math.random() > 0.5 ? "50%" : "2px";
+      confetti.style.animation = `confetti-fall ${Math.random() * 2 + 1.5}s ease-out forwards`;
+      confetti.style.animationDelay = Math.random() * 0.5 + "s";
+      document.body.appendChild(confetti);
+      setTimeout(() => confetti.remove(), 3000);
+    }
+  }
+
+  function showQuote() {
+    const nameInput = document.getElementById("nameInput").value.trim();
+    const name = nameInput || "あなた";
+
+    // Pick a random quote (avoid repeating the same one)
+    let index;
+    do {
+      index = Math.floor(Math.random() * quotes.length);
+    } while (index === lastIndex && quotes.length > 1);
+    lastIndex = index;
+
+    const quote = quotes[index];
+
+    // Change background theme
+    const bg = document.getElementById("bg");
+    const theme = themes[Math.floor(Math.random() * themes.length)];
+    bg.className = "bg " + theme;
+
+    // Reset animations
+    const icon = document.getElementById("quoteIcon");
+    const text = document.getElementById("quoteText");
+    const author = document.getElementById("quoteAuthor");
+    const enc = document.getElementById("encouragement");
+
+    icon.classList.remove("show");
+    text.classList.remove("show");
+    author.classList.remove("show");
+    enc.classList.remove("show");
+
+    // Set content
+    setTimeout(() => {
+      icon.textContent = quote.icon;
+      icon.classList.add("show");
+    }, 100);
+
+    setTimeout(() => {
+      text.textContent = "「" + quote.text + "」";
+      text.classList.add("show");
+    }, 300);
+
+    setTimeout(() => {
+      author.textContent = "— " + quote.author;
+      author.classList.add("show");
+    }, 500);
+
+    // Encouragement with name
+    const encouragement = encouragements[Math.floor(Math.random() * encouragements.length)];
+    setTimeout(() => {
+      enc.textContent = encouragement.replace("{name}", name);
+      enc.classList.add("show");
+    }, 700);
+
+    // Confetti
+    launchConfetti();
+
+    // Update counter
+    clickCount++;
+    document.getElementById("counter").textContent =
+      "今日のやる気チャージ回数: " + clickCount + " 回";
+  }
+
+  // Allow pressing Enter to trigger
+  document.getElementById("nameInput").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") {
+      showQuote();
+    }
+  });
+</script>
+
+</body>
+</html>
