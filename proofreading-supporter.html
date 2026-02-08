@@ -781,52 +781,95 @@
 
   function checkUserKeywordRules(text, rulesText) {
     // Parse user rules for keyword-based checks
-    // Look for patterns like:
-    //   ・「〜」を避ける / 使わない / 禁止
-    //   ・「〜」は「〜」に統一
+    // Supports many natural formats:
+    //   「〜」を避ける / 〜を使わない / 〜は禁止
+    //   「〜」は「〜」に統一 / 〜を〜に変更
     const issues = [];
     const lines = rulesText.split('\n');
 
-    for (const line of lines) {
-      // Pattern: avoid specific word - 「word」を避ける / 使わない / 禁止
-      let match = line.match(/[「『](.+?)[」』].*(?:避け|使わな|禁止|NG|使用しない|用いない)/);
+    for (const rawLine of lines) {
+      // Strip leading bullets / whitespace
+      const line = rawLine.replace(/^[\s・\-\*\d.、]+/, '').trim();
+      if (!line) continue;
+
+      // ── 1. Replace A with B patterns ──
+      // 「A」は「B」に統一 / AをBに変更 / AはBに書き換え
+      let match = line.match(/[「『](.+?)[」』].*?(?:は|を)[「『](.+?)[」』].*?(?:統一|置き換|変更|修正|書き換)/);
+      if (!match) {
+        // Unquoted: AをBに統一 / AはBに変更
+        match = line.match(/^(.+?)(?:を|は)(.+?)に(?:統一|置き換|変更|修正|書き換)/);
+      }
       if (match) {
-        const word = match[1];
-        try {
-          const re = new RegExp(escRegex(word), 'g');
-          let m;
-          while ((m = re.exec(text)) !== null) {
-            issues.push({
-              severity: 'error',
-              rule: 'カスタムルール違反',
-              message: `「${word}」の使用はルールで禁止されています。`,
-              excerpt: excerpt(text, m.index, m.index + m[0].length),
-              suggestion: `「${word}」を別の表現に置き換えてください。`,
-            });
-          }
-        } catch(e) { /* skip invalid regex */ }
-        continue;
+        const from = match[1].replace(/[「」『』。、]/g, '').trim();
+        const to   = match[2].replace(/[「」『』。、]/g, '').trim();
+        if (from && to && from !== to) {
+          try {
+            const re = new RegExp(escRegex(from), 'g');
+            let m;
+            while ((m = re.exec(text)) !== null) {
+              issues.push({
+                severity: 'error',
+                rule: 'カスタムルール違反',
+                message: `「${from}」は「${to}」に統一するルールです。`,
+                excerpt: excerpt(text, m.index, m.index + m[0].length),
+                suggestion: `「${from}」→「${to}」`,
+              });
+            }
+          } catch(e) { /* skip */ }
+          continue;
+        }
       }
 
-      // Pattern: replace A with B - 「A」は「B」に統一 / 置き換え / 変更
-      match = line.match(/[「『](.+?)[」』].*(?:は|を)[「『](.+?)[」』].*(?:統一|置き換|変更|修正|書き換)/);
+      // ── 2. Avoid / ban keyword patterns ──
+      // 「word」を避ける / wordを使わない / word禁止 / wordはNG
+      const avoidVerbs = /(?:を?避け|を?使わな|を?使用しな|を?用いな|は?禁止|は?NG|は?ダメ|は?不可|しない(?:こと)?)/;
+
+      // Try quoted first
+      match = line.match(new RegExp('[「『](.+?)[」』].*?' + avoidVerbs.source));
+      if (!match) {
+        // Unquoted: wordを使わない / word。を使わない / wordは禁止
+        match = line.match(new RegExp('^(.+?)(?:[。、]*)' + avoidVerbs.source));
+      }
       if (match) {
-        const from = match[1];
-        const to   = match[2];
-        try {
-          const re = new RegExp(escRegex(from), 'g');
-          let m;
-          while ((m = re.exec(text)) !== null) {
-            issues.push({
-              severity: 'error',
-              rule: 'カスタムルール違反',
-              message: `「${from}」は「${to}」に統一するルールです。`,
-              excerpt: excerpt(text, m.index, m.index + m[0].length),
-              suggestion: `「${from}」→「${to}」`,
-            });
-          }
-        } catch(e) { /* skip invalid regex */ }
-        continue;
+        const word = match[1].replace(/[「」『』。、]/g, '').trim();
+        if (word && word.length >= 1) {
+          try {
+            const re = new RegExp(escRegex(word), 'g');
+            let m;
+            while ((m = re.exec(text)) !== null) {
+              issues.push({
+                severity: 'error',
+                rule: 'カスタムルール違反',
+                message: `「${word}」の使用はルールで禁止されています。`,
+                excerpt: excerpt(text, m.index, m.index + m[0].length),
+                suggestion: `「${word}」を別の表現に置き換えてください。`,
+              });
+            }
+          } catch(e) { /* skip */ }
+          continue;
+        }
+      }
+
+      // ── 3. Simple "don't use X" with を at end ──
+      // Xを使わない where X contains period: です。を使わない
+      match = line.match(/^(.+?)[。、]*を(?:使わな|避け|使用しな)/);
+      if (match) {
+        const word = match[1].replace(/[「」『』。、\s]/g, '').trim();
+        if (word && word.length >= 1) {
+          try {
+            const re = new RegExp(escRegex(word), 'g');
+            let m;
+            while ((m = re.exec(text)) !== null) {
+              issues.push({
+                severity: 'error',
+                rule: 'カスタムルール違反',
+                message: `「${word}」の使用はルールで禁止されています。`,
+                excerpt: excerpt(text, m.index, m.index + m[0].length),
+                suggestion: `「${word}」を別の表現に置き換えてください。`,
+              });
+            }
+          } catch(e) { /* skip */ }
+        }
       }
     }
     return issues;
