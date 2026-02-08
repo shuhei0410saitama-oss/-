@@ -16,7 +16,16 @@
     --accent: #2563eb;
     --accent-hover: #1d4ed8;
     --danger: #dc2626;
+    --warn: #d97706;
+    --warn-bg: #fffbeb;
+    --warn-border: #fde68a;
+    --error-bg: #fef2f2;
+    --error-border: #fecaca;
+    --info: #2563eb;
+    --info-bg: #eff6ff;
+    --info-border: #bfdbfe;
     --success: #16a34a;
+    --success-bg: #f0fdf4;
     --radius: 6px;
     --font: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
   }
@@ -31,7 +40,7 @@
 
   /* ── Header ── */
   header {
-    padding: 16px 24px;
+    padding: 14px 24px;
     border-bottom: 1px solid var(--border);
     background: var(--surface);
     display: flex;
@@ -40,21 +49,37 @@
     flex-wrap: wrap;
     gap: 8px;
   }
-  header h1 {
-    font-size: 18px;
-    font-weight: 600;
-    letter-spacing: .02em;
+  header h1 { font-size: 18px; font-weight: 600; letter-spacing: .02em; }
+  header .subtitle { font-size: 12px; color: var(--text-sub); }
+
+  /* ── Tabs ── */
+  .tab-bar {
+    display: flex;
+    gap: 0;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
   }
-  header .subtitle {
-    font-size: 12px;
+  .tab-btn {
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 10px 20px;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
     color: var(--text-sub);
+    cursor: pointer;
+    transition: color .15s, border-color .15s;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
   }
 
   /* ── Main layout ── */
-  .container {
-    display: flex;
-    height: calc(100vh - 57px);
-  }
+  .container { display: flex; height: calc(100vh - 98px); }
   .panel {
     flex: 1;
     display: flex;
@@ -64,17 +89,14 @@
   }
   .panel-left {
     border-right: 1px solid var(--border);
-    max-width: 480px;
+    max-width: 500px;
     min-width: 320px;
     background: var(--surface);
   }
-  .panel-right {
-    flex: 1;
-    background: var(--bg);
-  }
+  .panel-right { flex: 1; background: var(--bg); }
 
   /* ── Section ── */
-  .section { margin-bottom: 20px; }
+  .section { margin-bottom: 16px; }
   .section-label {
     font-size: 12px;
     font-weight: 600;
@@ -86,11 +108,7 @@
     align-items: center;
     justify-content: space-between;
   }
-  .char-count {
-    font-weight: 400;
-    font-size: 12px;
-    color: var(--text-sub);
-  }
+  .char-count { font-weight: 400; font-size: 12px; color: var(--text-sub); }
 
   /* ── Textarea ── */
   textarea {
@@ -106,12 +124,9 @@
     background: var(--surface);
     transition: border-color .15s;
   }
-  textarea:focus {
-    outline: none;
-    border-color: var(--accent);
-  }
-  textarea.rules-area { height: 160px; }
-  textarea.body-area  { flex: 1; min-height: 300px; }
+  textarea:focus { outline: none; border-color: var(--accent); }
+  textarea.rules-area { height: 140px; }
+  textarea.body-area  { flex: 1; min-height: 240px; }
 
   /* ── Buttons ── */
   button {
@@ -125,53 +140,24 @@
     font-weight: 500;
   }
   button:active { opacity: .85; }
-
-  .btn-primary {
-    background: var(--accent);
-    color: #fff;
-  }
+  .btn-primary { background: var(--accent); color: #fff; }
   .btn-primary:hover { background: var(--accent-hover); }
-
-  .btn-secondary {
-    background: transparent;
-    color: var(--accent);
-    border: 1px solid var(--border);
-  }
+  .btn-secondary { background: transparent; color: var(--accent); border: 1px solid var(--border); }
   .btn-secondary:hover { background: #f0f4ff; }
-
-  .btn-small {
-    font-size: 11px;
-    padding: 4px 10px;
-  }
-
-  .btn-danger {
-    background: transparent;
-    color: var(--danger);
-    border: 1px solid var(--border);
-  }
+  .btn-small { font-size: 11px; padding: 4px 10px; }
+  .btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--border); }
   .btn-danger:hover { background: #fef2f2; }
 
   /* ── Presets ── */
-  .presets {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-bottom: 12px;
-  }
+  .presets { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
   .preset-btn {
-    background: #f1f5f9;
-    color: var(--text);
-    font-size: 12px;
-    padding: 5px 12px;
-    border-radius: 20px;
+    background: #f1f5f9; color: var(--text);
+    font-size: 12px; padding: 5px 12px; border-radius: 20px;
   }
   .preset-btn:hover { background: #e2e8f0; }
-  .preset-btn.active {
-    background: var(--accent);
-    color: #fff;
-  }
+  .preset-btn.active { background: var(--accent); color: #fff; }
 
-  /* ── Output ── */
+  /* ── Output (AI prompt mode) ── */
   .output-area {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -186,17 +172,101 @@
     min-height: 200px;
     color: var(--text);
   }
-  .output-area.empty {
-    color: var(--text-sub);
-    font-style: italic;
-  }
+  .output-area.empty { color: var(--text-sub); font-style: italic; }
 
-  .actions {
+  .actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+
+  /* ── Results (proofreading mode) ── */
+  .results-container { flex: 1; overflow-y: auto; }
+  .results-summary {
+    padding: 14px 18px;
+    border-radius: var(--radius);
+    margin-bottom: 16px;
+    font-size: 14px;
+    font-weight: 500;
     display: flex;
-    gap: 8px;
-    margin-top: 12px;
-    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
   }
+  .results-summary.has-issues { background: var(--warn-bg); border: 1px solid var(--warn-border); color: #92400e; }
+  .results-summary.no-issues  { background: var(--success-bg); border: 1px solid #bbf7d0; color: #166534; }
+  .results-summary .count { font-size: 24px; font-weight: 700; }
+
+  .issue-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 10px;
+    overflow: hidden;
+    transition: border-color .15s;
+  }
+  .issue-card:hover { border-color: #bbb; }
+  .issue-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .issue-header:hover { background: #fafafa; }
+  .issue-badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    white-space: nowrap;
+  }
+  .badge-error  { background: var(--error-bg); color: var(--danger); border: 1px solid var(--error-border); }
+  .badge-warn   { background: var(--warn-bg);  color: var(--warn);   border: 1px solid var(--warn-border); }
+  .badge-info   { background: var(--info-bg);  color: var(--info);   border: 1px solid var(--info-border); }
+  .issue-title { font-size: 13px; font-weight: 500; flex: 1; }
+  .issue-toggle { font-size: 12px; color: var(--text-sub); transition: transform .2s; }
+  .issue-card.open .issue-toggle { transform: rotate(180deg); }
+  .issue-body {
+    display: none;
+    padding: 0 16px 14px 16px;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+  .issue-card.open .issue-body { display: block; }
+  .issue-excerpt {
+    background: #f8f8f8;
+    border-left: 3px solid var(--warn-border);
+    padding: 8px 12px;
+    margin: 6px 0;
+    font-size: 13px;
+    border-radius: 0 4px 4px 0;
+    color: var(--text);
+  }
+  .issue-excerpt mark {
+    background: #fde68a;
+    padding: 1px 2px;
+    border-radius: 2px;
+  }
+  .issue-suggestion {
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: var(--info-bg);
+    border-radius: 4px;
+    font-size: 13px;
+    color: #1e40af;
+  }
+  .issue-suggestion::before { content: "提案: "; font-weight: 600; }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-sub);
+    font-size: 14px;
+  }
+  .empty-state .icon { font-size: 40px; margin-bottom: 12px; opacity: .4; }
+
+  /* ── Tab content ── */
+  .tab-content { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+  .tab-content.active { display: flex; }
 
   /* ── Toast ── */
   .toast {
@@ -214,25 +284,13 @@
     z-index: 100;
     pointer-events: none;
   }
-  .toast.show {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
   /* ── Responsive ── */
   @media (max-width: 768px) {
-    .container {
-      flex-direction: column;
-      height: auto;
-    }
-    .panel-left {
-      max-width: none;
-      border-right: none;
-      border-bottom: 1px solid var(--border);
-    }
-    .panel-right {
-      min-height: 60vh;
-    }
+    .container { flex-direction: column; height: auto; }
+    .panel-left { max-width: none; border-right: none; border-bottom: 1px solid var(--border); }
+    .panel-right { min-height: 60vh; }
   }
 </style>
 </head>
@@ -241,14 +299,18 @@
 <header>
   <div>
     <h1>マイルール校正サポーター</h1>
-    <div class="subtitle">ルールに基づいた校正指示を生成します</div>
+    <div class="subtitle">ルールに基づいて文章を校正します</div>
   </div>
 </header>
+
+<div class="tab-bar">
+  <button class="tab-btn active" data-tab="proofread">校正チェック</button>
+  <button class="tab-btn" data-tab="ai-prompt">AI指示文を生成</button>
+</div>
 
 <div class="container">
   <!-- ===== Left Panel ===== -->
   <div class="panel panel-left">
-
     <!-- Presets -->
     <div class="section">
       <div class="section-label">プリセット</div>
@@ -291,21 +353,37 @@
       ></textarea>
     </div>
 
-    <!-- Generate -->
+    <!-- Action buttons -->
     <div class="actions" style="margin-top:16px;">
-      <button class="btn-primary" id="generateBtn" style="flex:1;">AIへの指示を生成</button>
+      <button class="btn-primary" id="proofreadBtn" style="flex:1;">校正チェック実行</button>
     </div>
   </div>
 
   <!-- ===== Right Panel ===== -->
   <div class="panel panel-right">
-    <div class="section-label">
-      <span>生成された指示文</span>
+
+    <!-- Tab: Proofread results -->
+    <div class="tab-content active" id="tab-proofread">
+      <div class="section-label">
+        <span>校正結果</span>
+        <span class="char-count" id="issueCount"></span>
+      </div>
+      <div class="results-container" id="resultsContainer">
+        <div class="empty-state">
+          <div class="icon">&#9998;</div>
+          <div>左側にルールと本文を入力し、<br>「校正チェック実行」を押してください。</div>
+        </div>
+      </div>
     </div>
-    <div class="output-area empty" id="outputArea">左側にルールと本文を入力し、「AIへの指示を生成」ボタンを押してください。</div>
-    <div class="actions">
-      <button class="btn-primary" id="copyBtn" disabled>コピー</button>
-      <button class="btn-secondary" id="clearOutputBtn">出力をクリア</button>
+
+    <!-- Tab: AI prompt -->
+    <div class="tab-content" id="tab-ai-prompt">
+      <div class="section-label"><span>生成された指示文</span></div>
+      <div class="output-area empty" id="outputArea">「AI指示文を生成」タブで「AIへの指示を生成」ボタンを使ってください。</div>
+      <div class="actions">
+        <button class="btn-primary" id="copyBtn" disabled>コピー</button>
+        <button class="btn-secondary" id="clearOutputBtn">出力をクリア</button>
+      </div>
     </div>
   </div>
 </div>
@@ -314,67 +392,568 @@
 
 <script>
 (function () {
-  // ── Elements ──
-  const rulesArea      = document.getElementById('rulesArea');
-  const bodyArea       = document.getElementById('bodyArea');
-  const outputArea     = document.getElementById('outputArea');
-  const generateBtn    = document.getElementById('generateBtn');
-  const copyBtn        = document.getElementById('copyBtn');
-  const clearOutputBtn = document.getElementById('clearOutputBtn');
-  const saveRulesBtn   = document.getElementById('saveRulesBtn');
-  const clearRulesBtn  = document.getElementById('clearRulesBtn');
-  const rulesCount     = document.getElementById('rulesCount');
-  const bodyCount      = document.getElementById('bodyCount');
-  const toastEl        = document.getElementById('toast');
-  const presetContainer = document.getElementById('presetContainer');
+  // ══════════════════════════════════════════════════════════
+  //  Elements
+  // ══════════════════════════════════════════════════════════
+  const rulesArea        = document.getElementById('rulesArea');
+  const bodyArea         = document.getElementById('bodyArea');
+  const outputArea       = document.getElementById('outputArea');
+  const proofreadBtn     = document.getElementById('proofreadBtn');
+  const copyBtn          = document.getElementById('copyBtn');
+  const clearOutputBtn   = document.getElementById('clearOutputBtn');
+  const saveRulesBtn     = document.getElementById('saveRulesBtn');
+  const clearRulesBtn    = document.getElementById('clearRulesBtn');
+  const rulesCount       = document.getElementById('rulesCount');
+  const bodyCount        = document.getElementById('bodyCount');
+  const issueCountEl     = document.getElementById('issueCount');
+  const toastEl          = document.getElementById('toast');
+  const presetContainer  = document.getElementById('presetContainer');
+  const resultsContainer = document.getElementById('resultsContainer');
 
-  // ── Presets ──
+  // ══════════════════════════════════════════════════════════
+  //  Tab switching
+  // ══════════════════════════════════════════════════════════
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  const tabContents = document.querySelectorAll('.tab-content');
+
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', function () {
+      const target = this.dataset.tab;
+      tabBtns.forEach(b => b.classList.remove('active'));
+      tabContents.forEach(c => c.classList.remove('active'));
+      this.classList.add('active');
+      document.getElementById('tab-' + target).classList.add('active');
+
+      // Update button label
+      if (target === 'proofread') {
+        proofreadBtn.textContent = '校正チェック実行';
+      } else {
+        proofreadBtn.textContent = 'AIへの指示を生成';
+      }
+    });
+  });
+
+  // ══════════════════════════════════════════════════════════
+  //  Presets – rules text + built-in check patterns
+  // ══════════════════════════════════════════════════════════
   const PRESETS = {
-    'business-email': [
-      '・敬語を正しく使う（二重敬語を避ける）',
-      '・結論を先に述べ、理由や背景を後に書く',
-      '・一文は60文字以内を目安にする',
-      '・曖昧な表現（「思います」「かもしれません」）を避ける',
-      '・件名と本文の内容が一致しているか確認する',
-      '・誤字脱字がないか確認する',
-    ].join('\n'),
-    'report': [
-      '・数値には必ず単位と出典を明記する',
-      '・事実と意見を明確に区別する',
-      '・専門用語には初出時に説明を加える',
-      '・箇条書きを活用し、視認性を高める',
-      '・図表の参照番号が正しいか確認する',
-      '・日付や期間の表記を統一する',
-    ].join('\n'),
-    'sns': [
-      '・ターゲット読者を意識したカジュアルな文体にする',
-      '・一投稿あたり140文字（または指定文字数）以内に収める',
-      '・ハッシュタグは内容に合ったものを選ぶ',
-      '・誇張表現や誤解を招く表現を避ける',
-      '・読み手の行動を促すCTAを含める',
-      '・絵文字の使用は最小限にする',
-    ].join('\n'),
-    'technical': [
-      '・技術用語の表記を統一する（例：サーバー / サーバ）',
-      '・手順は番号付きリストで記述する',
-      '・コマンドやコードはコードブロックで囲む',
-      '・前提条件・動作環境を明記する',
-      '・略語は初出時にフルスペルを併記する',
-      '・主語と述語の対応を確認する',
-    ].join('\n'),
-    'press': [
-      '・5W1H（誰が・何を・いつ・どこで・なぜ・どのように）を明記する',
-      '・客観的な事実のみを記述し、主観を排除する',
-      '・社名・製品名の表記を正式名称に統一する',
-      '・引用部分は「」で囲み、発言者を明記する',
-      '・問い合わせ先を必ず記載する',
-      '・誇張表現（「革命的」「世界初」等）は根拠がある場合のみ使用する',
-    ].join('\n'),
+    'business-email': {
+      text: [
+        '・敬語を正しく使う（二重敬語を避ける）',
+        '・結論を先に述べ、理由や背景を後に書く',
+        '・一文は60文字以内を目安にする',
+        '・曖昧な表現（「思います」「かもしれません」）を避ける',
+        '・件名と本文の内容が一致しているか確認する',
+        '・誤字脱字がないか確認する',
+      ].join('\n'),
+    },
+    'report': {
+      text: [
+        '・数値には必ず単位と出典を明記する',
+        '・事実と意見を明確に区別する',
+        '・専門用語には初出時に説明を加える',
+        '・箇条書きを活用し、視認性を高める',
+        '・図表の参照番号が正しいか確認する',
+        '・日付や期間の表記を統一する',
+      ].join('\n'),
+    },
+    'sns': {
+      text: [
+        '・ターゲット読者を意識したカジュアルな文体にする',
+        '・一投稿あたり140文字（または指定文字数）以内に収める',
+        '・ハッシュタグは内容に合ったものを選ぶ',
+        '・誇張表現や誤解を招く表現を避ける',
+        '・読み手の行動を促すCTAを含める',
+        '・絵文字の使用は最小限にする',
+      ].join('\n'),
+    },
+    'technical': {
+      text: [
+        '・技術用語の表記を統一する（例：サーバー / サーバ）',
+        '・手順は番号付きリストで記述する',
+        '・コマンドやコードはコードブロックで囲む',
+        '・前提条件・動作環境を明記する',
+        '・略語は初出時にフルスペルを併記する',
+        '・主語と述語の対応を確認する',
+      ].join('\n'),
+    },
+    'press': {
+      text: [
+        '・5W1H（誰が・何を・いつ・どこで・なぜ・どのように）を明記する',
+        '・客観的な事実のみを記述し、主観を排除する',
+        '・社名・製品名の表記を正式名称に統一する',
+        '・引用部分は「」で囲み、発言者を明記する',
+        '・問い合わせ先を必ず記載する',
+        '・誇張表現（「革命的」「世界初」等）は根拠がある場合のみ使用する',
+      ].join('\n'),
+    },
   };
 
   let activePreset = null;
 
-  // ── Toast ──
+  // ══════════════════════════════════════════════════════════
+  //  Built-in proofreading engine
+  // ══════════════════════════════════════════════════════════
+
+  // Split text into sentences (Japanese period / newline boundaries)
+  function splitSentences(text) {
+    const results = [];
+    // Split on 。or newline, keeping the delimiter
+    const raw = text.split(/(?<=。)|(?<=\n)/);
+    let pos = 0;
+    for (const seg of raw) {
+      const trimmed = seg.replace(/^\n+/, '');
+      if (trimmed.length === 0) { pos += seg.length; continue; }
+      results.push({ text: trimmed, start: pos + (seg.length - trimmed.length), end: pos + seg.length });
+      pos += seg.length;
+    }
+    return results;
+  }
+
+  // Extract context around a match
+  function excerpt(text, matchStart, matchEnd, contextLen) {
+    contextLen = contextLen || 20;
+    const start = Math.max(0, matchStart - contextLen);
+    const end   = Math.min(text.length, matchEnd + contextLen);
+    const before = (start > 0 ? '…' : '') + escHtml(text.slice(start, matchStart));
+    const match  = '<mark>' + escHtml(text.slice(matchStart, matchEnd)) + '</mark>';
+    const after  = escHtml(text.slice(matchEnd, end)) + (end < text.length ? '…' : '');
+    return before + match + after;
+  }
+
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // ── Core check functions ──
+
+  function checkLongSentences(text, maxLen) {
+    const issues = [];
+    const sentences = splitSentences(text);
+    for (const s of sentences) {
+      const clean = s.text.replace(/\s/g, '');
+      if (clean.length > maxLen) {
+        issues.push({
+          severity: 'warn',
+          rule: '一文が長すぎる',
+          message: `この文は${clean.length}文字あります（上限: ${maxLen}文字）。分割を検討してください。`,
+          excerpt: excerpt(text, s.start, s.end, 10),
+          suggestion: '一文を短くし、読点（、）の位置で文を分けることを検討してください。',
+        });
+      }
+    }
+    return issues;
+  }
+
+  function checkAmbiguousExpressions(text) {
+    const patterns = [
+      { re: /思います/g,      word: '思います',      fix: '「です」「ます」など断定表現に変更' },
+      { re: /かもしれません/g, word: 'かもしれません', fix: '確信がある場合は断定表現に変更' },
+      { re: /だと思う/g,       word: 'だと思う',       fix: '「です」「である」に変更' },
+      { re: /かもしれない/g,   word: 'かもしれない',   fix: '事実であれば断定表現に変更' },
+      { re: /ような気がする/g, word: 'ような気がする', fix: '根拠がある場合は明確に記述' },
+      { re: /(?:たぶん|多分)/g, word: 'たぶん/多分',   fix: '根拠を示して断定する' },
+      { re: /(?:おそらく)/g,   word: 'おそらく',       fix: '根拠を示して断定する' },
+      { re: /(?:一応)/g,       word: '一応',           fix: '具体的な目的や理由を明記する' },
+      { re: /(?:なんとなく)/g, word: 'なんとなく',     fix: '具体的な理由を記述する' },
+      { re: /ちょっと/g,       word: 'ちょっと',       fix: '具体的な程度を示す（例:「やや」「少し」）' },
+      { re: /(?:いろいろ|色々)(?!な[具特])/g, word: 'いろいろ/色々', fix: '具体的な内容を列挙する' },
+    ];
+    const issues = [];
+    for (const p of patterns) {
+      let m;
+      while ((m = p.re.exec(text)) !== null) {
+        issues.push({
+          severity: 'warn',
+          rule: '曖昧な表現',
+          message: `「${p.word}」は曖昧な表現です。`,
+          excerpt: excerpt(text, m.index, m.index + m[0].length),
+          suggestion: p.fix,
+        });
+      }
+    }
+    return issues;
+  }
+
+  function checkDoubleHonorifics(text) {
+    const patterns = [
+      { re: /おっしゃられ/g, word: 'おっしゃられ', fix: '「おっしゃる」（「言う」の尊敬語）で十分です' },
+      { re: /ご覧になられ/g, word: 'ご覧になられ', fix: '「ご覧になる」で十分です' },
+      { re: /お召し上がりになられ/g, word: 'お召し上がりになられ', fix: '「召し上がる」で十分です' },
+      { re: /ご利用になられ/g, word: 'ご利用になられ', fix: '「ご利用になる」で十分です' },
+      { re: /お帰りになられ/g, word: 'お帰りになられ', fix: '「お帰りになる」で十分です' },
+      { re: /させていただきますでしょうか/g, word: 'させていただきますでしょうか', fix: '「させていただけますか」「いたしましょうか」に簡潔化' },
+      { re: /(?:各|各々の)それぞれ/g, word: '各〜それぞれ', fix: '「各」か「それぞれ」のどちらかに統一' },
+    ];
+    const issues = [];
+    for (const p of patterns) {
+      let m;
+      while ((m = p.re.exec(text)) !== null) {
+        issues.push({
+          severity: 'error',
+          rule: '二重敬語',
+          message: `「${p.word}」は二重敬語です。`,
+          excerpt: excerpt(text, m.index, m.index + m[0].length),
+          suggestion: p.fix,
+        });
+      }
+    }
+    return issues;
+  }
+
+  function checkRedundantExpressions(text) {
+    const patterns = [
+      { re: /まず最初に/g,     word: 'まず最初に',     fix: '「まず」または「最初に」のどちらかに' },
+      { re: /後で後悔/g,       word: '後で後悔',       fix: '「後悔」だけで「後で」の意味を含みます' },
+      { re: /一番最初/g,       word: '一番最初',       fix: '「最初」で十分です' },
+      { re: /一番最後/g,       word: '一番最後',       fix: '「最後」で十分です' },
+      { re: /必ず必要/g,       word: '必ず必要',       fix: '「必要」で十分です' },
+      { re: /約\d+[つ個名人]ほど/g, word: '約〜ほど',  fix: '「約」か「ほど」のどちらかに' },
+      { re: /頭痛が痛い/g,     word: '頭痛が痛い',     fix: '「頭が痛い」または「頭痛がする」に' },
+      { re: /違和感を感じ/g,   word: '違和感を感じる', fix: '「違和感がある」「違和感を覚える」に' },
+      { re: /犯罪を犯/g,       word: '犯罪を犯す',     fix: '「罪を犯す」「犯罪を行う」に' },
+      { re: /被害を被/g,       word: '被害を被る',     fix: '「被害を受ける」「被害に遭う」に' },
+      { re: /元旦の朝/g,       word: '元旦の朝',       fix: '「元旦」自体が1月1日の朝を意味します' },
+      { re: /返事を返す/g,     word: '返事を返す',     fix: '「返事をする」に' },
+      { re: /馬から落馬/g,     word: '馬から落馬',     fix: '「落馬する」で十分です' },
+      { re: /日本に来日/g,     word: '日本に来日',     fix: '「来日する」で十分です' },
+      { re: /あとで後悔/g,     word: 'あとで後悔',     fix: '「後悔」だけで十分です' },
+    ];
+    const issues = [];
+    for (const p of patterns) {
+      let m;
+      while ((m = p.re.exec(text)) !== null) {
+        issues.push({
+          severity: 'error',
+          rule: '重複表現',
+          message: `「${p.word}」は意味が重複しています。`,
+          excerpt: excerpt(text, m.index, m.index + m[0].length),
+          suggestion: p.fix,
+        });
+      }
+    }
+    return issues;
+  }
+
+  function checkConsecutiveSameParticle(text) {
+    // 「〜は〜は〜は」 のように同じ助詞が連続する文を検出
+    const issues = [];
+    const sentences = splitSentences(text);
+    const particleGroups = [
+      { particle: 'は', re: /は/g },
+      { particle: 'が', re: /が/g },
+      { particle: 'を', re: /を/g },
+      { particle: 'に', re: /に/g },
+      { particle: 'の', re: /の/g },
+    ];
+    for (const s of sentences) {
+      const sText = s.text;
+      // Skip short sentences
+      if (sText.length < 15) continue;
+      for (const pg of particleGroups) {
+        const matches = [];
+        let m;
+        const re = new RegExp(pg.particle, 'g');
+        while ((m = re.exec(sText)) !== null) {
+          matches.push(m.index);
+        }
+        if (matches.length >= 4) {
+          issues.push({
+            severity: 'info',
+            rule: '助詞の連続使用',
+            message: `一文中に「${pg.particle}」が${matches.length}回使われています。読みにくくなる可能性があります。`,
+            excerpt: excerpt(text, s.start, s.end, 5),
+            suggestion: `文を分割するか、別の表現に言い換えてみてください。`,
+          });
+        }
+      }
+    }
+    return issues;
+  }
+
+  function checkDesumasu(text) {
+    // 「です・ます」調と「だ・である」調の混在を検出
+    const sentences = splitSentences(text);
+    let desumasuCount = 0;
+    let deCount = 0;
+    const desumasuSentences = [];
+    const deSentences = [];
+
+    for (const s of sentences) {
+      const t = s.text.trim();
+      if (t.length < 5) continue;
+      if (/(?:です|ます|ました|ません|でしょう)[。？！\s]*$/.test(t)) {
+        desumasuCount++;
+        desumasuSentences.push(s);
+      } else if (/(?:だ|である|った|ない|であろう)[。？！\s]*$/.test(t)) {
+        deCount++;
+        deSentences.push(s);
+      }
+    }
+
+    const issues = [];
+    if (desumasuCount > 0 && deCount > 0) {
+      // Report the minority style as violations
+      const isDesumasuMajority = desumasuCount >= deCount;
+      const minority = isDesumasuMajority ? deSentences : desumasuSentences;
+      const majorStyle = isDesumasuMajority ? 'です・ます調' : 'だ・である調';
+      const minorStyle = isDesumasuMajority ? 'だ・である調' : 'です・ます調';
+
+      for (const s of minority.slice(0, 5)) {
+        issues.push({
+          severity: 'warn',
+          rule: '文体の不統一',
+          message: `文章の大部分は${majorStyle}ですが、この文は${minorStyle}です。`,
+          excerpt: excerpt(text, s.start, s.end, 5),
+          suggestion: `文体を${majorStyle}に統一してください。`,
+        });
+      }
+      if (minority.length > 5) {
+        issues.push({
+          severity: 'info',
+          rule: '文体の不統一',
+          message: `他にも${minority.length - 5}箇所、文体が混在しています。`,
+          excerpt: '',
+          suggestion: `文体を${majorStyle}に統一してください。`,
+        });
+      }
+    }
+    return issues;
+  }
+
+  function checkSpacingIssues(text) {
+    const issues = [];
+
+    // Full-width/half-width number mix check
+    const fwNumbers = /[０-９]+/g;
+    let m;
+    while ((m = fwNumbers.exec(text)) !== null) {
+      issues.push({
+        severity: 'info',
+        rule: '全角数字',
+        message: '全角数字が使われています。半角数字に統一することを検討してください。',
+        excerpt: excerpt(text, m.index, m.index + m[0].length),
+        suggestion: `「${m[0]}」→「${m[0].replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))}」`,
+      });
+    }
+
+    // Half-width katakana
+    const hwKatakana = /[\uFF65-\uFF9F]+/g;
+    while ((m = hwKatakana.exec(text)) !== null) {
+      issues.push({
+        severity: 'warn',
+        rule: '半角カタカナ',
+        message: '半角カタカナが使われています。全角カタカナに統一してください。',
+        excerpt: excerpt(text, m.index, m.index + m[0].length),
+        suggestion: '全角カタカナに変換してください。',
+      });
+    }
+
+    return issues;
+  }
+
+  function checkExaggeration(text) {
+    const patterns = [
+      { re: /革命的/g,     word: '革命的' },
+      { re: /世界初/g,     word: '世界初' },
+      { re: /業界初/g,     word: '業界初' },
+      { re: /史上最[高大強良好美]/g, word: '史上最〜' },
+      { re: /唯一無二/g,   word: '唯一無二' },
+      { re: /画期的/g,     word: '画期的' },
+      { re: /完璧/g,       word: '完璧' },
+      { re: /絶対[にな]/g, word: '絶対に' },
+    ];
+    const issues = [];
+    for (const p of patterns) {
+      let m;
+      while ((m = p.re.exec(text)) !== null) {
+        issues.push({
+          severity: 'info',
+          rule: '誇張表現',
+          message: `「${p.word}」は誇張表現の可能性があります。根拠があるか確認してください。`,
+          excerpt: excerpt(text, m.index, m.index + m[0].length),
+          suggestion: '客観的な根拠を添えるか、より控えめな表現に修正してください。',
+        });
+      }
+    }
+    return issues;
+  }
+
+  function checkUserKeywordRules(text, rulesText) {
+    // Parse user rules for keyword-based checks
+    // Look for patterns like:
+    //   ・「〜」を避ける / 使わない / 禁止
+    //   ・「〜」は「〜」に統一
+    const issues = [];
+    const lines = rulesText.split('\n');
+
+    for (const line of lines) {
+      // Pattern: avoid specific word - 「word」を避ける / 使わない / 禁止
+      let match = line.match(/[「『](.+?)[」』].*(?:避け|使わな|禁止|NG|使用しない|用いない)/);
+      if (match) {
+        const word = match[1];
+        try {
+          const re = new RegExp(escRegex(word), 'g');
+          let m;
+          while ((m = re.exec(text)) !== null) {
+            issues.push({
+              severity: 'error',
+              rule: 'カスタムルール違反',
+              message: `「${word}」の使用はルールで禁止されています。`,
+              excerpt: excerpt(text, m.index, m.index + m[0].length),
+              suggestion: `「${word}」を別の表現に置き換えてください。`,
+            });
+          }
+        } catch(e) { /* skip invalid regex */ }
+        continue;
+      }
+
+      // Pattern: replace A with B - 「A」は「B」に統一 / 置き換え / 変更
+      match = line.match(/[「『](.+?)[」』].*(?:は|を)[「『](.+?)[」』].*(?:統一|置き換|変更|修正|書き換)/);
+      if (match) {
+        const from = match[1];
+        const to   = match[2];
+        try {
+          const re = new RegExp(escRegex(from), 'g');
+          let m;
+          while ((m = re.exec(text)) !== null) {
+            issues.push({
+              severity: 'error',
+              rule: 'カスタムルール違反',
+              message: `「${from}」は「${to}」に統一するルールです。`,
+              excerpt: excerpt(text, m.index, m.index + m[0].length),
+              suggestion: `「${from}」→「${to}」`,
+            });
+          }
+        } catch(e) { /* skip invalid regex */ }
+        continue;
+      }
+    }
+    return issues;
+  }
+
+  function escRegex(s) {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  // ── Determine which checks to run based on rules text ──
+  function parseActiveChecks(rulesText) {
+    const lower = rulesText;
+    const checks = {
+      longSentence: false,
+      longSentenceMax: 60,
+      ambiguous: false,
+      doubleHonorific: false,
+      redundant: true,             // always on – these are clear errors
+      consecutiveParticle: false,
+      desumasu: false,
+      spacing: true,               // always on
+      exaggeration: false,
+      userKeywords: true,          // always parse user keywords
+    };
+
+    if (/一文.{0,5}\d+文字|文.*短く|文.*分割|文.*長/u.test(lower)) {
+      checks.longSentence = true;
+      const numMatch = lower.match(/(\d+)\s*文字/);
+      if (numMatch) checks.longSentenceMax = parseInt(numMatch[1], 10);
+    }
+    if (/曖昧|あいまい|断定|思います/.test(lower)) checks.ambiguous = true;
+    if (/敬語|二重敬語|丁寧/.test(lower))           checks.doubleHonorific = true;
+    if (/助詞/.test(lower))                          checks.consecutiveParticle = true;
+    if (/文体|です.*ます|だ.*である|統一.*調/.test(lower)) checks.desumasu = true;
+    if (/誇張|控えめ|客観/.test(lower))              checks.exaggeration = true;
+
+    return checks;
+  }
+
+  // ── Run all checks ──
+  function runProofreading(text, rulesText) {
+    const checks = parseActiveChecks(rulesText);
+    let issues = [];
+
+    // Always run universal checks
+    issues = issues.concat(checkRedundantExpressions(text));
+    issues = issues.concat(checkSpacingIssues(text));
+
+    // Conditional checks based on rules
+    if (checks.longSentence)       issues = issues.concat(checkLongSentences(text, checks.longSentenceMax));
+    if (checks.ambiguous)          issues = issues.concat(checkAmbiguousExpressions(text));
+    if (checks.doubleHonorific)    issues = issues.concat(checkDoubleHonorifics(text));
+    if (checks.consecutiveParticle)issues = issues.concat(checkConsecutiveSameParticle(text));
+    if (checks.desumasu)           issues = issues.concat(checkDesumasu(text));
+    if (checks.exaggeration)       issues = issues.concat(checkExaggeration(text));
+    if (checks.userKeywords)       issues = issues.concat(checkUserKeywordRules(text, rulesText));
+
+    // Sort: error > warn > info
+    const order = { error: 0, warn: 1, info: 2 };
+    issues.sort((a, b) => (order[a.severity] || 9) - (order[b.severity] || 9));
+
+    return issues;
+  }
+
+  // ══════════════════════════════════════════════════════════
+  //  Render results
+  // ══════════════════════════════════════════════════════════
+  function renderResults(issues) {
+    resultsContainer.innerHTML = '';
+
+    if (issues.length === 0) {
+      resultsContainer.innerHTML =
+        '<div class="results-summary no-issues">' +
+        '<span class="count">0</span> 問題は見つかりませんでした。</div>' +
+        '<div class="empty-state"><div class="icon">&#10003;</div><div>すべてのチェックに合格しました。</div></div>';
+      issueCountEl.textContent = '';
+      return;
+    }
+
+    const errors = issues.filter(i => i.severity === 'error').length;
+    const warns  = issues.filter(i => i.severity === 'warn').length;
+    const infos  = issues.filter(i => i.severity === 'info').length;
+
+    const parts = [];
+    if (errors) parts.push(errors + ' 件のエラー');
+    if (warns)  parts.push(warns  + ' 件の警告');
+    if (infos)  parts.push(infos  + ' 件の情報');
+
+    const summary = document.createElement('div');
+    summary.className = 'results-summary has-issues';
+    summary.innerHTML = '<span class="count">' + issues.length + '</span> ' + parts.join('、') + ' が見つかりました';
+    resultsContainer.appendChild(summary);
+
+    issueCountEl.textContent = issues.length + ' 件';
+
+    for (let i = 0; i < issues.length; i++) {
+      const issue = issues[i];
+      const card = document.createElement('div');
+      card.className = 'issue-card';
+
+      const badgeClass = issue.severity === 'error' ? 'badge-error' :
+                         issue.severity === 'warn'  ? 'badge-warn' : 'badge-info';
+      const badgeLabel = issue.severity === 'error' ? 'エラー' :
+                         issue.severity === 'warn'  ? '警告' : '情報';
+
+      card.innerHTML =
+        '<div class="issue-header">' +
+          '<span class="issue-badge ' + badgeClass + '">' + badgeLabel + '</span>' +
+          '<span class="issue-title">' + escHtml(issue.rule) + ': ' + escHtml(issue.message) + '</span>' +
+          '<span class="issue-toggle">&#9660;</span>' +
+        '</div>' +
+        '<div class="issue-body">' +
+          (issue.excerpt ? '<div class="issue-excerpt">' + issue.excerpt + '</div>' : '') +
+          (issue.suggestion ? '<div class="issue-suggestion">' + escHtml(issue.suggestion) + '</div>' : '') +
+        '</div>';
+
+      card.querySelector('.issue-header').addEventListener('click', function () {
+        card.classList.toggle('open');
+      });
+
+      resultsContainer.appendChild(card);
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════
+  //  Toast
+  // ══════════════════════════════════════════════════════════
   let toastTimer = null;
   function showToast(msg) {
     clearTimeout(toastTimer);
@@ -383,7 +962,9 @@
     toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2000);
   }
 
-  // ── Character count ──
+  // ══════════════════════════════════════════════════════════
+  //  Character count
+  // ══════════════════════════════════════════════════════════
   function updateCounts() {
     rulesCount.textContent = rulesArea.value.length + ' 文字';
     bodyCount.textContent  = bodyArea.value.length  + ' 文字';
@@ -391,7 +972,9 @@
   rulesArea.addEventListener('input', updateCounts);
   bodyArea.addEventListener('input', updateCounts);
 
-  // ── Deselect preset when rules are manually edited ──
+  // ══════════════════════════════════════════════════════════
+  //  Preset handling
+  // ══════════════════════════════════════════════════════════
   rulesArea.addEventListener('input', function () {
     if (activePreset) {
       activePreset = null;
@@ -399,14 +982,12 @@
     }
   });
 
-  // ── Preset click ──
   presetContainer.addEventListener('click', function (e) {
     const btn = e.target.closest('.preset-btn');
     if (!btn) return;
     const key = btn.dataset.preset;
     if (!PRESETS[key]) return;
 
-    // Toggle
     if (activePreset === key) {
       activePreset = null;
       btn.classList.remove('active');
@@ -415,40 +996,54 @@
       activePreset = key;
       document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      rulesArea.value = PRESETS[key];
+      rulesArea.value = PRESETS[key].text;
     }
     updateCounts();
   });
 
-  // ── Generate ──
-  generateBtn.addEventListener('click', function () {
+  // ══════════════════════════════════════════════════════════
+  //  Main action button
+  // ══════════════════════════════════════════════════════════
+  proofreadBtn.addEventListener('click', function () {
     const rules = rulesArea.value.trim();
     const body  = bodyArea.value.trim();
+    const activeTab = document.querySelector('.tab-btn.active').dataset.tab;
 
-    if (!rules && !body) {
-      showToast('ルールと本文を入力してください');
-      return;
-    }
+    if (!rules && !body) { showToast('ルールと本文を入力してください'); return; }
     if (!rules) { showToast('ルールを入力してください'); return; }
     if (!body)  { showToast('本文を入力してください');     return; }
 
-    const output = [
-      'あなたはプロの校正者です。以下の【ルール】に基づいて、【本文】をチェックし、違反している箇所を指摘して改善案を出してください。',
-      '',
-      '【ルール】',
-      rules,
-      '',
-      '【本文】',
-      body,
-    ].join('\n');
+    if (activeTab === 'proofread') {
+      // ── Run built-in proofreading ──
+      const issues = runProofreading(body, rules);
+      renderResults(issues);
+      if (issues.length > 0) {
+        showToast(issues.length + ' 件の指摘が見つかりました');
+      } else {
+        showToast('問題は見つかりませんでした');
+      }
+    } else {
+      // ── Generate AI prompt ──
+      const output = [
+        'あなたはプロの校正者です。以下の【ルール】に基づいて、【本文】をチェックし、違反している箇所を指摘して改善案を出してください。',
+        '',
+        '【ルール】',
+        rules,
+        '',
+        '【本文】',
+        body,
+      ].join('\n');
 
-    outputArea.textContent = output;
-    outputArea.classList.remove('empty');
-    copyBtn.disabled = false;
-    showToast('指示文を生成しました');
+      outputArea.textContent = output;
+      outputArea.classList.remove('empty');
+      copyBtn.disabled = false;
+      showToast('指示文を生成しました');
+    }
   });
 
-  // ── Copy ──
+  // ══════════════════════════════════════════════════════════
+  //  Copy / Clear
+  // ══════════════════════════════════════════════════════════
   copyBtn.addEventListener('click', async function () {
     const text = outputArea.textContent;
     if (!text) return;
@@ -456,7 +1051,6 @@
       await navigator.clipboard.writeText(text);
       showToast('クリップボードにコピーしました');
     } catch {
-      // Fallback
       const ta = document.createElement('textarea');
       ta.value = text;
       ta.style.position = 'fixed';
@@ -469,21 +1063,20 @@
     }
   });
 
-  // ── Clear output ──
   clearOutputBtn.addEventListener('click', function () {
-    outputArea.textContent = '左側にルールと本文を入力し、「AIへの指示を生成」ボタンを押してください。';
+    outputArea.textContent = '「AI指示文を生成」タブで「AIへの指示を生成」ボタンを使ってください。';
     outputArea.classList.add('empty');
     copyBtn.disabled = true;
   });
 
-  // ── Save rules to localStorage ──
+  // ══════════════════════════════════════════════════════════
+  //  Save / Clear rules
+  // ══════════════════════════════════════════════════════════
   saveRulesBtn.addEventListener('click', function () {
-    const rules = rulesArea.value;
-    localStorage.setItem('proofreader_rules', rules);
+    localStorage.setItem('proofreader_rules', rulesArea.value);
     showToast('ルールを保存しました');
   });
 
-  // ── Clear rules ──
   clearRulesBtn.addEventListener('click', function () {
     rulesArea.value = '';
     activePreset = null;
@@ -491,12 +1084,12 @@
     updateCounts();
   });
 
-  // ── Load saved rules on startup ──
+  // ══════════════════════════════════════════════════════════
+  //  Init
+  // ══════════════════════════════════════════════════════════
   (function init() {
     const saved = localStorage.getItem('proofreader_rules');
-    if (saved) {
-      rulesArea.value = saved;
-    }
+    if (saved) rulesArea.value = saved;
     updateCounts();
   })();
 })();
