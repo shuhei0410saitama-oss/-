@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>マイルール校正サポーター</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #fafafa;
+    --surface: #ffffff;
+    --border: #e0e0e0;
+    --text: #1a1a1a;
+    --text-sub: #666;
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --danger: #dc2626;
+    --success: #16a34a;
+    --radius: 6px;
+    --font: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  header h1 {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: .02em;
+  }
+  header .subtitle {
+    font-size: 12px;
+    color: var(--text-sub);
+  }
+
+  /* ── Main layout ── */
+  .container {
+    display: flex;
+    height: calc(100vh - 57px);
+  }
+  .panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    overflow-y: auto;
+  }
+  .panel-left {
+    border-right: 1px solid var(--border);
+    max-width: 480px;
+    min-width: 320px;
+    background: var(--surface);
+  }
+  .panel-right {
+    flex: 1;
+    background: var(--bg);
+  }
+
+  /* ── Section ── */
+  .section { margin-bottom: 20px; }
+  .section-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--text-sub);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .char-count {
+    font-weight: 400;
+    font-size: 12px;
+    color: var(--text-sub);
+  }
+
+  /* ── Textarea ── */
+  textarea {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px;
+    font-family: var(--font);
+    font-size: 14px;
+    line-height: 1.7;
+    resize: vertical;
+    color: var(--text);
+    background: var(--surface);
+    transition: border-color .15s;
+  }
+  textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  textarea.rules-area { height: 160px; }
+  textarea.body-area  { flex: 1; min-height: 300px; }
+
+  /* ── Buttons ── */
+  button {
+    font-family: var(--font);
+    font-size: 13px;
+    border: none;
+    border-radius: var(--radius);
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: background .15s, opacity .15s;
+    font-weight: 500;
+  }
+  button:active { opacity: .85; }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-primary:hover { background: var(--accent-hover); }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { background: #f0f4ff; }
+
+  .btn-small {
+    font-size: 11px;
+    padding: 4px 10px;
+  }
+
+  .btn-danger {
+    background: transparent;
+    color: var(--danger);
+    border: 1px solid var(--border);
+  }
+  .btn-danger:hover { background: #fef2f2; }
+
+  /* ── Presets ── */
+  .presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .preset-btn {
+    background: #f1f5f9;
+    color: var(--text);
+    font-size: 12px;
+    padding: 5px 12px;
+    border-radius: 20px;
+  }
+  .preset-btn:hover { background: #e2e8f0; }
+  .preset-btn.active {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  /* ── Output ── */
+  .output-area {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    font-size: 14px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    flex: 1;
+    overflow-y: auto;
+    min-height: 200px;
+    color: var(--text);
+  }
+  .output-area.empty {
+    color: var(--text-sub);
+    font-style: italic;
+  }
+
+  .actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #1a1a1a;
+    color: #fff;
+    padding: 10px 24px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    opacity: 0;
+    transition: transform .3s, opacity .3s;
+    z-index: 100;
+    pointer-events: none;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .container {
+      flex-direction: column;
+      height: auto;
+    }
+    .panel-left {
+      max-width: none;
+      border-right: none;
+      border-bottom: 1px solid var(--border);
+    }
+    .panel-right {
+      min-height: 60vh;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>マイルール校正サポーター</h1>
+    <div class="subtitle">ルールに基づいた校正指示を生成します</div>
+  </div>
+</header>
+
+<div class="container">
+  <!-- ===== Left Panel ===== -->
+  <div class="panel panel-left">
+
+    <!-- Presets -->
+    <div class="section">
+      <div class="section-label">プリセット</div>
+      <div class="presets" id="presetContainer">
+        <button class="preset-btn" data-preset="business-email">ビジネスメール用</button>
+        <button class="preset-btn" data-preset="report">経理報告書用</button>
+        <button class="preset-btn" data-preset="sns">SNS投稿用</button>
+        <button class="preset-btn" data-preset="technical">技術文書用</button>
+        <button class="preset-btn" data-preset="press">プレスリリース用</button>
+      </div>
+    </div>
+
+    <!-- Rules -->
+    <div class="section">
+      <div class="section-label">
+        <span>守るべきルール</span>
+        <span class="char-count" id="rulesCount">0 文字</span>
+      </div>
+      <textarea
+        class="rules-area"
+        id="rulesArea"
+        placeholder="例：&#10;・専門用語を避け、平易な表現を使う&#10;・結論から先に書く&#10;・一文は60文字以内にする&#10;・「思います」などの曖昧表現を避ける"
+      ></textarea>
+      <div class="actions">
+        <button class="btn-secondary btn-small" id="saveRulesBtn">ルールを保存</button>
+        <button class="btn-danger btn-small" id="clearRulesBtn">クリア</button>
+      </div>
+    </div>
+
+    <!-- Body text -->
+    <div class="section" style="flex:1; display:flex; flex-direction:column;">
+      <div class="section-label">
+        <span>チェックしたい文章</span>
+        <span class="char-count" id="bodyCount">0 文字</span>
+      </div>
+      <textarea
+        class="body-area"
+        id="bodyArea"
+        placeholder="校正したい文章をここに入力してください..."
+      ></textarea>
+    </div>
+
+    <!-- Generate -->
+    <div class="actions" style="margin-top:16px;">
+      <button class="btn-primary" id="generateBtn" style="flex:1;">AIへの指示を生成</button>
+    </div>
+  </div>
+
+  <!-- ===== Right Panel ===== -->
+  <div class="panel panel-right">
+    <div class="section-label">
+      <span>生成された指示文</span>
+    </div>
+    <div class="output-area empty" id="outputArea">左側にルールと本文を入力し、「AIへの指示を生成」ボタンを押してください。</div>
+    <div class="actions">
+      <button class="btn-primary" id="copyBtn" disabled>コピー</button>
+      <button class="btn-secondary" id="clearOutputBtn">出力をクリア</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  // ── Elements ──
+  const rulesArea      = document.getElementById('rulesArea');
+  const bodyArea       = document.getElementById('bodyArea');
+  const outputArea     = document.getElementById('outputArea');
+  const generateBtn    = document.getElementById('generateBtn');
+  const copyBtn        = document.getElementById('copyBtn');
+  const clearOutputBtn = document.getElementById('clearOutputBtn');
+  const saveRulesBtn   = document.getElementById('saveRulesBtn');
+  const clearRulesBtn  = document.getElementById('clearRulesBtn');
+  const rulesCount     = document.getElementById('rulesCount');
+  const bodyCount      = document.getElementById('bodyCount');
+  const toastEl        = document.getElementById('toast');
+  const presetContainer = document.getElementById('presetContainer');
+
+  // ── Presets ──
+  const PRESETS = {
+    'business-email': [
+      '・敬語を正しく使う（二重敬語を避ける）',
+      '・結論を先に述べ、理由や背景を後に書く',
+      '・一文は60文字以内を目安にする',
+      '・曖昧な表現（「思います」「かもしれません」）を避ける',
+      '・件名と本文の内容が一致しているか確認する',
+      '・誤字脱字がないか確認する',
+    ].join('\n'),
+    'report': [
+      '・数値には必ず単位と出典を明記する',
+      '・事実と意見を明確に区別する',
+      '・専門用語には初出時に説明を加える',
+      '・箇条書きを活用し、視認性を高める',
+      '・図表の参照番号が正しいか確認する',
+      '・日付や期間の表記を統一する',
+    ].join('\n'),
+    'sns': [
+      '・ターゲット読者を意識したカジュアルな文体にする',
+      '・一投稿あたり140文字（または指定文字数）以内に収める',
+      '・ハッシュタグは内容に合ったものを選ぶ',
+      '・誇張表現や誤解を招く表現を避ける',
+      '・読み手の行動を促すCTAを含める',
+      '・絵文字の使用は最小限にする',
+    ].join('\n'),
+    'technical': [
+      '・技術用語の表記を統一する（例：サーバー / サーバ）',
+      '・手順は番号付きリストで記述する',
+      '・コマンドやコードはコードブロックで囲む',
+      '・前提条件・動作環境を明記する',
+      '・略語は初出時にフルスペルを併記する',
+      '・主語と述語の対応を確認する',
+    ].join('\n'),
+    'press': [
+      '・5W1H（誰が・何を・いつ・どこで・なぜ・どのように）を明記する',
+      '・客観的な事実のみを記述し、主観を排除する',
+      '・社名・製品名の表記を正式名称に統一する',
+      '・引用部分は「」で囲み、発言者を明記する',
+      '・問い合わせ先を必ず記載する',
+      '・誇張表現（「革命的」「世界初」等）は根拠がある場合のみ使用する',
+    ].join('\n'),
+  };
+
+  let activePreset = null;
+
+  // ── Toast ──
+  let toastTimer = null;
+  function showToast(msg) {
+    clearTimeout(toastTimer);
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2000);
+  }
+
+  // ── Character count ──
+  function updateCounts() {
+    rulesCount.textContent = rulesArea.value.length + ' 文字';
+    bodyCount.textContent  = bodyArea.value.length  + ' 文字';
+  }
+  rulesArea.addEventListener('input', updateCounts);
+  bodyArea.addEventListener('input', updateCounts);
+
+  // ── Deselect preset when rules are manually edited ──
+  rulesArea.addEventListener('input', function () {
+    if (activePreset) {
+      activePreset = null;
+      document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+    }
+  });
+
+  // ── Preset click ──
+  presetContainer.addEventListener('click', function (e) {
+    const btn = e.target.closest('.preset-btn');
+    if (!btn) return;
+    const key = btn.dataset.preset;
+    if (!PRESETS[key]) return;
+
+    // Toggle
+    if (activePreset === key) {
+      activePreset = null;
+      btn.classList.remove('active');
+      rulesArea.value = '';
+    } else {
+      activePreset = key;
+      document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      rulesArea.value = PRESETS[key];
+    }
+    updateCounts();
+  });
+
+  // ── Generate ──
+  generateBtn.addEventListener('click', function () {
+    const rules = rulesArea.value.trim();
+    const body  = bodyArea.value.trim();
+
+    if (!rules && !body) {
+      showToast('ルールと本文を入力してください');
+      return;
+    }
+    if (!rules) { showToast('ルールを入力してください'); return; }
+    if (!body)  { showToast('本文を入力してください');     return; }
+
+    const output = [
+      'あなたはプロの校正者です。以下の【ルール】に基づいて、【本文】をチェックし、違反している箇所を指摘して改善案を出してください。',
+      '',
+      '【ルール】',
+      rules,
+      '',
+      '【本文】',
+      body,
+    ].join('\n');
+
+    outputArea.textContent = output;
+    outputArea.classList.remove('empty');
+    copyBtn.disabled = false;
+    showToast('指示文を生成しました');
+  });
+
+  // ── Copy ──
+  copyBtn.addEventListener('click', async function () {
+    const text = outputArea.textContent;
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast('クリップボードにコピーしました');
+    } catch {
+      // Fallback
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      showToast('クリップボードにコピーしました');
+    }
+  });
+
+  // ── Clear output ──
+  clearOutputBtn.addEventListener('click', function () {
+    outputArea.textContent = '左側にルールと本文を入力し、「AIへの指示を生成」ボタンを押してください。';
+    outputArea.classList.add('empty');
+    copyBtn.disabled = true;
+  });
+
+  // ── Save rules to localStorage ──
+  saveRulesBtn.addEventListener('click', function () {
+    const rules = rulesArea.value;
+    localStorage.setItem('proofreader_rules', rules);
+    showToast('ルールを保存しました');
+  });
+
+  // ── Clear rules ──
+  clearRulesBtn.addEventListener('click', function () {
+    rulesArea.value = '';
+    activePreset = null;
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+    updateCounts();
+  });
+
+  // ── Load saved rules on startup ──
+  (function init() {
+    const saved = localStorage.getItem('proofreader_rules');
+    if (saved) {
+      rulesArea.value = saved;
+    }
+    updateCounts();
+  })();
+})();
+</script>
+</body>
+</html>
