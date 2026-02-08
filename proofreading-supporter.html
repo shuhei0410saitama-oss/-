@@ -225,7 +225,30 @@
     color: #1e40af;
   }
   .issue-suggestion::before { content: "提案: "; font-weight: 600; }
-  .issue-actions { margin-top: 10px; display: flex; gap: 6px; }
+  .issue-actions { margin-top: 10px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .issue-manual-input {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin-top: 8px;
+    flex-wrap: wrap;
+  }
+  .issue-manual-input input {
+    font-family: var(--font);
+    font-size: 13px;
+    padding: 5px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    min-width: 120px;
+    flex: 1;
+  }
+  .issue-manual-input input:focus { outline: none; border-color: var(--accent); }
+  .issue-manual-input label {
+    font-size: 12px;
+    color: var(--text-sub);
+    white-space: nowrap;
+  }
 
   .empty-state {
     text-align: center;
@@ -744,8 +767,9 @@
                 rule: 'カスタムルール違反',
                 message: `「${word}」の使用はルールで禁止されています。`,
                 excerpt: excerpt(text, m.index, m.index + m[0].length),
-                suggestion: `「${word}」を別の表現に置き換えてください。`,
+                suggestion: null,
                 fix: null,
+                matchedText: m[0],
               });
             }
           } catch(e) {}
@@ -767,8 +791,9 @@
                 rule: 'カスタムルール違反',
                 message: `「${word}」の使用はルールで禁止されています。`,
                 excerpt: excerpt(text, m.index, m.index + m[0].length),
-                suggestion: `「${word}」を別の表現に置き換えてください。`,
+                suggestion: null,
                 fix: null,
+                matchedText: m[0],
               });
             }
           } catch(e) {}
@@ -917,7 +942,7 @@
     for (let i = 0; i < issues.length; i++) {
       const issue = issues[i];
       const card = document.createElement('div');
-      card.className = 'issue-card';
+      card.className = 'issue-card open'; // default open
 
       const badgeClass = issue.severity === 'error' ? 'badge-error' :
                          issue.severity === 'warn'  ? 'badge-warn' : 'badge-info';
@@ -928,19 +953,32 @@
       if (issue.excerpt) {
         bodyHtml += '<div class="issue-excerpt">' + issue.excerpt + '</div>';
       }
+
       if (issue.fix) {
+        // Auto-fixable: show preview and one-click fix button
         bodyHtml +=
           '<div class="issue-fix-preview">' +
             '<span class="fix-from">' + escHtml(issue.fix.from) + '</span>' +
             '<span class="fix-arrow">→</span>' +
             '<span class="fix-to">' + (issue.fix.to === '' ? '（削除）' : escHtml(issue.fix.to)) + '</span>' +
-          '</div>';
-        bodyHtml +=
+          '</div>' +
           '<div class="issue-actions">' +
             '<button class="btn-fix btn-small issue-fix-btn" data-idx="' + i + '">この箇所を修正</button>' +
           '</div>';
-      } else if (issue.suggestion) {
-        bodyHtml += '<div class="issue-suggestion">' + escHtml(issue.suggestion) + '</div>';
+      } else {
+        // No auto-fix: show manual replacement input
+        const original = issue.matchedText || '';
+        if (original) {
+          bodyHtml +=
+            '<div class="issue-manual-input">' +
+              '<label>「' + escHtml(original) + '」→</label>' +
+              '<input type="text" class="manual-replace-input" data-idx="' + i + '" placeholder="置き換え先を入力（空欄で削除）">' +
+              '<button class="btn-fix btn-small manual-replace-btn" data-idx="' + i + '">修正</button>' +
+            '</div>';
+        }
+        if (issue.suggestion) {
+          bodyHtml += '<div class="issue-suggestion">' + escHtml(issue.suggestion) + '</div>';
+        }
       }
 
       card.innerHTML =
@@ -955,6 +993,7 @@
         card.classList.toggle('open');
       });
 
+      // Auto-fix button
       const fixBtn = card.querySelector('.issue-fix-btn');
       if (fixBtn) {
         fixBtn.addEventListener('click', function () {
@@ -962,13 +1001,42 @@
           const target = currentIssues[idx];
           if (applyFix(target)) {
             showToast('修正しました');
-            // Re-run
             const newIssues = runProofreading(bodyArea.value.trim(), rulesArea.value.trim());
             renderResults(newIssues);
           } else {
             showToast('該当箇所が見つかりません');
           }
         });
+      }
+
+      // Manual replace button
+      const manualBtn = card.querySelector('.manual-replace-btn');
+      if (manualBtn) {
+        manualBtn.addEventListener('click', function () {
+          const idx = parseInt(this.dataset.idx, 10);
+          const target = currentIssues[idx];
+          const input = card.querySelector('.manual-replace-input');
+          const replacement = input ? input.value : '';
+          const original = target.matchedText;
+          if (!original) return;
+
+          const text = bodyArea.value;
+          const pos = text.indexOf(original);
+          if (pos === -1) { showToast('該当箇所が見つかりません'); return; }
+          bodyArea.value = text.substring(0, pos) + replacement + text.substring(pos + original.length);
+          updateCounts();
+          showToast('修正しました');
+          const newIssues = runProofreading(bodyArea.value.trim(), rulesArea.value.trim());
+          renderResults(newIssues);
+        });
+
+        // Enter key support
+        const input = card.querySelector('.manual-replace-input');
+        if (input) {
+          input.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') { manualBtn.click(); }
+          });
+        }
       }
 
       resultsContainer.appendChild(card);
