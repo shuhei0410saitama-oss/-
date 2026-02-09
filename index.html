@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Food Slot</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #13151a;
+      --panel: #1f2330;
+      --accent: #ffcd56;
+      --accent-2: #4bc0c0;
+      --text: #f5f7ff;
+      --muted: #c7cee5;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+      background: radial-gradient(circle at top, #22293c, var(--bg));
+      color: var(--text);
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+    }
+
+    .app {
+      width: min(920px, 100%);
+      background: linear-gradient(165deg, #27304a, var(--panel));
+      border: 1px solid #3a4463;
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+      position: relative;
+      overflow: hidden;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.4rem, 3vw, 2rem);
+    }
+
+    p { color: var(--muted); margin-top: 0; }
+
+    .settings {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    input {
+      width: 100%;
+      border: 1px solid #4b567b;
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: #111622;
+      color: var(--text);
+      font-size: 1rem;
+    }
+
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #141821;
+      background: linear-gradient(90deg, var(--accent), #ffe187);
+      cursor: pointer;
+    }
+
+    button.secondary {
+      color: var(--text);
+      background: #3b4667;
+    }
+
+    .slot {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .reel {
+      background: #101524;
+      border: 2px solid #4a567b;
+      border-radius: 14px;
+      min-height: 100px;
+      display: grid;
+      place-items: center;
+      font-size: clamp(1.2rem, 3vw, 2rem);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-align: center;
+      padding: 8px;
+      transition: transform 0.15s ease;
+    }
+
+    .reel.spinning {
+      animation: jiggle 0.15s linear infinite alternate;
+      border-color: var(--accent-2);
+    }
+
+    @keyframes jiggle {
+      from { transform: translateY(-3px); }
+      to { transform: translateY(3px); }
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    #message {
+      min-height: 1.5em;
+      font-weight: 700;
+      color: #ffe187;
+    }
+
+    #confetti {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <canvas id="confetti"></canvas>
+    <h1>自分だけの「食べ物スロット」</h1>
+    <p>好きな食べ物を「、」か「,」で区切って入力してください。3つ揃うと紙吹雪！</p>
+
+    <div class="settings">
+      <input id="foods" value="寿司, ラーメン, 焼肉, パスタ, いちご, 唐揚げ" aria-label="好きな食べ物" />
+      <button class="secondary" id="apply">絵柄を更新</button>
+    </div>
+
+    <section class="slot" aria-live="polite">
+      <div class="reel" id="reel0">🍣</div>
+      <div class="reel" id="reel1">🍜</div>
+      <div class="reel" id="reel2">🍖</div>
+    </section>
+
+    <div class="actions">
+      <button id="spin">スピン！</button>
+      <span id="message"></span>
+    </div>
+  </main>
+
+  <script>
+    const reels = [...document.querySelectorAll('.reel')];
+    const spinButton = document.getElementById('spin');
+    const applyButton = document.getElementById('apply');
+    const foodsInput = document.getElementById('foods');
+    const message = document.getElementById('message');
+    const canvas = document.getElementById('confetti');
+    const ctx = canvas.getContext('2d');
+
+    let foods = parseFoods(foodsInput.value);
+    let spinning = false;
+    let confettiPieces = [];
+    let animationId;
+
+    function parseFoods(text) {
+      return text
+        .split(/[、,]/)
+        .map((item) => item.trim())
+        .filter(Boolean);
+    }
+
+    function randomFood() {
+      return foods[Math.floor(Math.random() * foods.length)] || 'おにぎり';
+    }
+
+    function setMessage(text, color = '#ffe187') {
+      message.textContent = text;
+      message.style.color = color;
+    }
+
+    applyButton.addEventListener('click', () => {
+      const nextFoods = parseFoods(foodsInput.value);
+      if (nextFoods.length < 3) {
+        setMessage('絵柄は3つ以上入力してください。', '#ff9d9d');
+        return;
+      }
+      foods = nextFoods;
+      reels.forEach((reel) => {
+        reel.textContent = randomFood();
+      });
+      setMessage('絵柄を更新しました！');
+    });
+
+    spinButton.addEventListener('click', async () => {
+      if (spinning) return;
+      spinning = true;
+      setMessage('回転中…');
+
+      const results = [];
+
+      for (let i = 0; i < reels.length; i++) {
+        const reel = reels[i];
+        reel.classList.add('spinning');
+
+        await new Promise((resolve) => {
+          let ticks = 0;
+          const interval = setInterval(() => {
+            reel.textContent = randomFood();
+            ticks += 1;
+            if (ticks > 8 + i * 4) {
+              clearInterval(interval);
+              reel.classList.remove('spinning');
+              results[i] = reel.textContent;
+              resolve();
+            }
+          }, 80);
+        });
+      }
+
+      const isJackpot = results.every((food) => food === results[0]);
+      if (isJackpot) {
+        setMessage(`🎉 大当たり！「${results[0]}」が3つ揃いました！`, '#99ffd7');
+        launchConfetti();
+      } else {
+        setMessage(`結果：${results.join(' | ')}`);
+      }
+
+      spinning = false;
+    });
+
+    function sizeCanvas() {
+      const app = document.querySelector('.app');
+      const rect = app.getBoundingClientRect();
+      canvas.width = rect.width;
+      canvas.height = rect.height;
+    }
+
+    function launchConfetti() {
+      sizeCanvas();
+      confettiPieces = Array.from({ length: 160 }, () => ({
+        x: Math.random() * canvas.width,
+        y: -20 - Math.random() * canvas.height * 0.3,
+        r: 3 + Math.random() * 5,
+        vy: 1.6 + Math.random() * 2.4,
+        vx: -1.5 + Math.random() * 3,
+        rot: Math.random() * Math.PI * 2,
+        spin: -0.15 + Math.random() * 0.3,
+        color: ['#ff6b6b', '#ffd93d', '#6bcb77', '#4d96ff', '#f087ff'][Math.floor(Math.random() * 5)]
+      }));
+
+      cancelAnimationFrame(animationId);
+      const start = performance.now();
+
+      function frame(now) {
+        const elapsed = now - start;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        confettiPieces.forEach((p) => {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.rot += p.spin;
+
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rot);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.r / 2, -p.r / 2, p.r, p.r * 0.7);
+          ctx.restore();
+        });
+
+        confettiPieces = confettiPieces.filter((p) => p.y < canvas.height + 30);
+
+        if (elapsed < 2400 || confettiPieces.length > 0) {
+          animationId = requestAnimationFrame(frame);
+        } else {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+      }
+
+      animationId = requestAnimationFrame(frame);
+    }
+
+    window.addEventListener('resize', sizeCanvas);
+    sizeCanvas();
+    reels.forEach((reel) => { reel.textContent = randomFood(); });
+  </script>
+</body>
+</html>
