@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>癒やしのペット</title>
+<style>
+  * { margin: 0; padding: 0; }
+
+  body {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: linear-gradient(135deg, #e0f7fa 0%, #f3e5f5 50%, #fff3e0 100%);
+    cursor: default;
+    font-family: 'Segoe UI', 'Hiragino Sans', sans-serif;
+    user-select: none;
+  }
+
+  /* gentle floating particles in background */
+  .particle {
+    position: fixed;
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0.3;
+    animation: float-particle linear infinite;
+  }
+
+  @keyframes float-particle {
+    0%   { transform: translateY(100vh) scale(0); opacity: 0; }
+    10%  { opacity: 0.3; }
+    90%  { opacity: 0.3; }
+    100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+  }
+
+  .hint {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #9e9e9e;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+    animation: fade-hint 4s ease-in-out infinite;
+  }
+
+  @keyframes fade-hint {
+    0%, 100% { opacity: 0.4; }
+    50%      { opacity: 0.8; }
+  }
+
+  /* the pet */
+  #pet {
+    position: fixed;
+    pointer-events: auto;
+    cursor: pointer;
+    z-index: 1000;
+    transition: filter 0.3s;
+  }
+
+  #pet:hover { filter: brightness(1.08); }
+
+  /* nade-nade popup */
+  .nade {
+    position: fixed;
+    pointer-events: none;
+    font-size: 20px;
+    font-weight: bold;
+    color: #e91e63;
+    white-space: nowrap;
+    animation: nade-pop 1.2s ease-out forwards;
+    z-index: 2000;
+    text-shadow: 0 0 6px rgba(233, 30, 99, 0.3);
+  }
+
+  @keyframes nade-pop {
+    0%   { opacity: 1; transform: translateY(0) scale(0.5); }
+    30%  { transform: translateY(-20px) scale(1.2); }
+    50%  { transform: translateY(-30px) scale(1); }
+    100% { opacity: 0; transform: translateY(-70px) scale(0.8); }
+  }
+
+  /* heart burst on click */
+  .heart {
+    position: fixed;
+    pointer-events: none;
+    font-size: 18px;
+    animation: heart-fly 1s ease-out forwards;
+    z-index: 1999;
+  }
+
+  @keyframes heart-fly {
+    0%   { opacity: 1; transform: translate(0, 0) scale(0.3); }
+    100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(1); }
+  }
+
+  /* footprints trail */
+  .footprint {
+    position: fixed;
+    pointer-events: none;
+    font-size: 12px;
+    opacity: 0.4;
+    animation: footprint-fade 2s ease-out forwards;
+    z-index: 500;
+  }
+
+  @keyframes footprint-fade {
+    0%   { opacity: 0.4; transform: scale(1); }
+    100% { opacity: 0; transform: scale(0.5); }
+  }
+
+  /* zzz when idle */
+  .zzz {
+    position: fixed;
+    pointer-events: none;
+    font-size: 16px;
+    color: #7986cb;
+    animation: zzz-float 2s ease-out forwards;
+    z-index: 2000;
+  }
+
+  @keyframes zzz-float {
+    0%   { opacity: 0.8; transform: translate(0, 0) scale(0.8); }
+    100% { opacity: 0; transform: translate(20px, -40px) scale(1.2); }
+  }
+</style>
+</head>
+<body>
+
+<div class="hint">ペットをクリックしてなでなでしよう</div>
+
+<canvas id="pet" width="80" height="80"></canvas>
+
+<script>
+// ── state ──
+const pet = document.getElementById('pet');
+const ctx = pet.getContext('2d');
+
+let mouseX = window.innerWidth / 2;
+let mouseY = window.innerHeight / 2;
+let petX = mouseX;
+let petY = mouseY;
+let velX = 0;
+let velY = 0;
+let expression = 'normal';   // normal | happy | love | sleepy
+let expressionTimer = 0;
+let blinkTimer = 0;
+let blinking = false;
+let idleTime = 0;
+let bouncePhase = 0;
+let tailPhase = 0;
+let footprintTimer = 0;
+let lastSpeed = 0;
+let zzzTimer = 0;
+let cheekGlow = 0;
+
+// ── mouse tracking ──
+document.addEventListener('mousemove', e => {
+  mouseX = e.clientX;
+  mouseY = e.clientY;
+  idleTime = 0;
+  if (expression === 'sleepy') {
+    expression = 'normal';
+    expressionTimer = 0;
+  }
+});
+
+// ── click handler ──
+pet.addEventListener('click', e => {
+  e.stopPropagation();
+  expression = Math.random() < 0.5 ? 'happy' : 'love';
+  expressionTimer = 120;
+  cheekGlow = 1;
+  idleTime = 0;
+
+  // spawn "なでなで"
+  const nade = document.createElement('div');
+  nade.className = 'nade';
+  nade.textContent = 'なでなで';
+  nade.style.left = (petX - 30) + 'px';
+  nade.style.top = (petY - 55) + 'px';
+  document.body.appendChild(nade);
+  setTimeout(() => nade.remove(), 1300);
+
+  // spawn hearts
+  for (let i = 0; i < 6; i++) {
+    const heart = document.createElement('div');
+    heart.className = 'heart';
+    heart.textContent = ['❤', '💕', '💖', '✨', '💗', '🩷'][i];
+    const angle = (Math.PI * 2 / 6) * i + Math.random() * 0.5;
+    const dist = 40 + Math.random() * 30;
+    heart.style.left = petX + 'px';
+    heart.style.top = petY + 'px';
+    heart.style.setProperty('--dx', Math.cos(angle) * dist + 'px');
+    heart.style.setProperty('--dy', Math.sin(angle) * dist - 20 + 'px');
+    document.body.appendChild(heart);
+    setTimeout(() => heart.remove(), 1100);
+  }
+});
+
+// ── background particles ──
+function spawnParticles() {
+  const colors = ['#ffccbc', '#f8bbd0', '#c5cae9', '#b2dfdb', '#fff9c4'];
+  for (let i = 0; i < 15; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = 4 + Math.random() * 8;
+    p.style.width = size + 'px';
+    p.style.height = size + 'px';
+    p.style.left = Math.random() * 100 + 'vw';
+    p.style.background = colors[Math.floor(Math.random() * colors.length)];
+    p.style.animationDuration = (8 + Math.random() * 12) + 's';
+    p.style.animationDelay = (Math.random() * 15) + 's';
+    document.body.appendChild(p);
+  }
+}
+spawnParticles();
+
+// ── drawing ──
+function drawPet() {
+  const w = 80, h = 80;
+  ctx.clearRect(0, 0, w, h);
+
+  const cx = w / 2;
+  const cy = h / 2 + 4;
+  const bounce = Math.sin(bouncePhase) * 3;
+
+  // shadow
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, cy + 28 - bounce * 0.3, 22, 6, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(0, bounce);
+
+  // body
+  const grad = ctx.createRadialGradient(cx, cy, 5, cx, cy, 28);
+  grad.addColorStop(0, '#fff8e1');
+  grad.addColorStop(1, '#ffcc80');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(cx, cy, 26, 0, Math.PI * 2);
+  ctx.fill();
+
+  // outline
+  ctx.strokeStyle = '#e0a050';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(cx, cy, 26, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // ears
+  const earY = cy - 22;
+  // left ear
+  ctx.fillStyle = '#ffcc80';
+  ctx.beginPath();
+  ctx.ellipse(cx - 18, earY - 8, 9, 12, -0.3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#e0a050';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  // inner ear
+  ctx.fillStyle = '#ffab91';
+  ctx.beginPath();
+  ctx.ellipse(cx - 17, earY - 6, 5, 7, -0.3, 0, Math.PI * 2);
+  ctx.fill();
+
+  // right ear
+  ctx.fillStyle = '#ffcc80';
+  ctx.beginPath();
+  ctx.ellipse(cx + 18, earY - 8, 9, 12, 0.3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#e0a050';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.fillStyle = '#ffab91';
+  ctx.beginPath();
+  ctx.ellipse(cx + 17, earY - 6, 5, 7, 0.3, 0, Math.PI * 2);
+  ctx.fill();
+
+  // tail (wagging)
+  const tailWag = Math.sin(tailPhase) * 0.4;
+  ctx.strokeStyle = '#ffb74d';
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(cx + 24, cy + 8);
+  ctx.quadraticCurveTo(cx + 36 + Math.sin(tailPhase) * 6, cy + tailWag * 10, cx + 32, cy - 8 + Math.sin(tailPhase) * 4);
+  ctx.stroke();
+
+  // cheeks
+  const cheekAlpha = 0.3 + cheekGlow * 0.4;
+  ctx.fillStyle = `rgba(255, 138, 128, ${cheekAlpha})`;
+  ctx.beginPath();
+  ctx.ellipse(cx - 16, cy + 6, 7, 5, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(cx + 16, cy + 6, 7, 5, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // face
+  ctx.fillStyle = '#5d4037';
+  ctx.strokeStyle = '#5d4037';
+  ctx.lineWidth = 1.5;
+  ctx.lineCap = 'round';
+
+  if (expression === 'sleepy') {
+    // sleepy eyes (closed lines)
+    ctx.beginPath();
+    ctx.moveTo(cx - 12, cy - 3);
+    ctx.lineTo(cx - 6, cy - 3);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx + 6, cy - 3);
+    ctx.lineTo(cx + 12, cy - 3);
+    ctx.stroke();
+    // sleepy mouth
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 10, 3, 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (expression === 'happy') {
+    // happy eyes (^  ^)
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(cx - 13, cy - 1);
+    ctx.quadraticCurveTo(cx - 9, cy - 7, cx - 5, cy - 1);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx + 5, cy - 1);
+    ctx.quadraticCurveTo(cx + 9, cy - 7, cx + 13, cy - 1);
+    ctx.stroke();
+    // wide smile
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(cx, cy + 6, 6, 0.1, Math.PI - 0.1);
+    ctx.stroke();
+  } else if (expression === 'love') {
+    // heart eyes
+    drawHeart(cx - 9, cy - 4, 6, '#e91e63');
+    drawHeart(cx + 9, cy - 4, 6, '#e91e63');
+    // happy mouth
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(cx, cy + 6, 5, 0.1, Math.PI - 0.1);
+    ctx.stroke();
+  } else {
+    // normal eyes
+    if (blinking) {
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cx - 12, cy - 3);
+      ctx.lineTo(cx - 6, cy - 3);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(cx + 6, cy - 3);
+      ctx.lineTo(cx + 12, cy - 3);
+      ctx.stroke();
+    } else {
+      ctx.beginPath();
+      ctx.arc(cx - 9, cy - 4, 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(cx + 9, cy - 4, 3, 0, Math.PI * 2);
+      ctx.fill();
+      // eye highlights
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc(cx - 8, cy - 5, 1.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(cx + 10, cy - 5, 1.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#5d4037';
+    }
+    // small smile
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(cx, cy + 7, 4, 0.2, Math.PI - 0.2);
+    ctx.stroke();
+  }
+
+  // nose
+  ctx.fillStyle = '#e0a050';
+  ctx.beginPath();
+  ctx.moveTo(cx, cy + 1);
+  ctx.lineTo(cx - 2.5, cy + 4);
+  ctx.lineTo(cx + 2.5, cy + 4);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawHeart(x, y, size, color) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(x, y + size * 0.3);
+  ctx.bezierCurveTo(x, y - size * 0.3, x - size, y - size * 0.3, x - size * 0.05, y + size * 0.6);
+  ctx.moveTo(x, y + size * 0.3);
+  ctx.bezierCurveTo(x, y - size * 0.3, x + size, y - size * 0.3, x + size * 0.05, y + size * 0.6);
+  ctx.closePath();
+  ctx.fill();
+}
+
+// ── game loop ──
+function update() {
+  requestAnimationFrame(update);
+
+  // spring-follow physics
+  const dx = mouseX - petX;
+  const dy = mouseY - petY;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+
+  // keep some distance from cursor
+  const targetDist = 60;
+  let ax = 0, ay = 0;
+  if (dist > targetDist) {
+    const strength = 0.004 * (dist - targetDist);
+    ax = (dx / dist) * strength;
+    ay = (dy / dist) * strength;
+  }
+
+  velX += ax;
+  velY += ay;
+  velX *= 0.92;
+  velY *= 0.92;
+  petX += velX;
+  petY += velY;
+
+  lastSpeed = Math.sqrt(velX * velX + velY * velY);
+
+  // position
+  pet.style.left = (petX - 40) + 'px';
+  pet.style.top = (petY - 40) + 'px';
+
+  // bounce & tail animation
+  bouncePhase += 0.08 + lastSpeed * 0.02;
+  tailPhase += 0.12 + lastSpeed * 0.04;
+
+  // blink
+  blinkTimer++;
+  if (!blinking && blinkTimer > 120 + Math.random() * 100) {
+    blinking = true;
+    blinkTimer = 0;
+  }
+  if (blinking && blinkTimer > 8) {
+    blinking = false;
+    blinkTimer = 0;
+  }
+
+  // expression timer
+  if (expressionTimer > 0) {
+    expressionTimer--;
+    if (expressionTimer === 0) expression = 'normal';
+  }
+
+  // cheek glow decay
+  if (cheekGlow > 0) cheekGlow *= 0.97;
+  if (cheekGlow < 0.01) cheekGlow = 0;
+
+  // idle → sleepy
+  idleTime++;
+  if (idleTime > 300 && expression === 'normal') {
+    expression = 'sleepy';
+  }
+
+  // zzz when sleepy
+  if (expression === 'sleepy') {
+    zzzTimer++;
+    if (zzzTimer > 50) {
+      zzzTimer = 0;
+      const z = document.createElement('div');
+      z.className = 'zzz';
+      z.textContent = 'z';
+      z.style.left = (petX + 15) + 'px';
+      z.style.top = (petY - 35) + 'px';
+      z.style.fontSize = (14 + Math.random() * 8) + 'px';
+      document.body.appendChild(z);
+      setTimeout(() => z.remove(), 2100);
+    }
+  } else {
+    zzzTimer = 0;
+  }
+
+  // footprints while moving
+  if (lastSpeed > 1.5) {
+    footprintTimer++;
+    if (footprintTimer > 12) {
+      footprintTimer = 0;
+      const fp = document.createElement('div');
+      fp.className = 'footprint';
+      fp.textContent = '🐾';
+      fp.style.left = (petX - 6 + (Math.random() - 0.5) * 10) + 'px';
+      fp.style.top = (petY + 20) + 'px';
+      document.body.appendChild(fp);
+      setTimeout(() => fp.remove(), 2100);
+    }
+  }
+
+  drawPet();
+}
+
+update();
+</script>
+</body>
+</html>
