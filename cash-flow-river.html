@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Cash Flow River - Indirect Method Master</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Roboto', sans-serif;
+    background: #0a0a1a;
+    color: #fff;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+  }
+  .arcade-font { font-family: 'Press Start 2P', monospace; }
+
+  /* Neon glow effects */
+  .neon-green { text-shadow: 0 0 7px #39ff14, 0 0 10px #39ff14, 0 0 21px #39ff14; color: #39ff14; }
+  .neon-red { text-shadow: 0 0 7px #ff3131, 0 0 10px #ff3131, 0 0 21px #ff3131; color: #ff3131; }
+  .neon-blue { text-shadow: 0 0 7px #00d4ff, 0 0 10px #00d4ff, 0 0 21px #00d4ff; color: #00d4ff; }
+  .neon-purple { text-shadow: 0 0 7px #bf40ff, 0 0 10px #bf40ff, 0 0 21px #bf40ff; color: #bf40ff; }
+  .neon-yellow { text-shadow: 0 0 7px #ffe600, 0 0 10px #ffe600, 0 0 21px #ffe600; color: #ffe600; }
+
+  /* Gate buttons */
+  .gate-btn {
+    position: relative;
+    border: 2px solid;
+    border-radius: 8px;
+    padding: 8px 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: center;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    min-height: 64px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .gate-btn:active, .gate-btn.active {
+    transform: scale(0.95);
+  }
+  .gate-btn .key-hint {
+    font-size: 10px;
+    opacity: 0.7;
+    margin-top: 2px;
+  }
+  .gate-op-plus {
+    border-color: #39ff14;
+    background: rgba(57,255,20,0.1);
+    box-shadow: 0 0 15px rgba(57,255,20,0.3), inset 0 0 15px rgba(57,255,20,0.1);
+  }
+  .gate-op-plus:hover, .gate-op-plus.active {
+    background: rgba(57,255,20,0.25);
+    box-shadow: 0 0 25px rgba(57,255,20,0.5), inset 0 0 25px rgba(57,255,20,0.2);
+  }
+  .gate-op-minus {
+    border-color: #ff3131;
+    background: rgba(255,49,49,0.1);
+    box-shadow: 0 0 15px rgba(255,49,49,0.3), inset 0 0 15px rgba(255,49,49,0.1);
+  }
+  .gate-op-minus:hover, .gate-op-minus.active {
+    background: rgba(255,49,49,0.25);
+    box-shadow: 0 0 25px rgba(255,49,49,0.5), inset 0 0 25px rgba(255,49,49,0.2);
+  }
+  .gate-investing {
+    border-color: #00d4ff;
+    background: rgba(0,212,255,0.1);
+    box-shadow: 0 0 15px rgba(0,212,255,0.3), inset 0 0 15px rgba(0,212,255,0.1);
+  }
+  .gate-investing:hover, .gate-investing.active {
+    background: rgba(0,212,255,0.25);
+    box-shadow: 0 0 25px rgba(0,212,255,0.5), inset 0 0 25px rgba(0,212,255,0.2);
+  }
+  .gate-financing {
+    border-color: #bf40ff;
+    background: rgba(191,64,255,0.1);
+    box-shadow: 0 0 15px rgba(191,64,255,0.3), inset 0 0 15px rgba(191,64,255,0.1);
+  }
+  .gate-financing:hover, .gate-financing.active {
+    background: rgba(191,64,255,0.25);
+    box-shadow: 0 0 25px rgba(191,64,255,0.5), inset 0 0 25px rgba(191,64,255,0.2);
+  }
+
+  /* Canvas container */
+  #game-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Overlays */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    background: rgba(10,10,26,0.92);
+    backdrop-filter: blur(6px);
+  }
+  .overlay.hidden { display: none; }
+
+  /* Popup feedback */
+  .feedback-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 50;
+    pointer-events: none;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .feedback-popup.show { opacity: 1; }
+
+  /* HUD */
+  .hud-bar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 30;
+    padding: 8px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(180deg, rgba(10,10,26,0.95) 0%, rgba(10,10,26,0) 100%);
+  }
+
+  /* Bottom gate area */
+  .gate-area {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 30;
+    padding: 8px 8px 12px;
+    background: linear-gradient(0deg, rgba(10,10,26,0.95) 0%, rgba(10,10,26,0) 100%);
+  }
+
+  /* Lives hearts */
+  .heart { color: #ff3131; margin: 0 2px; }
+  .heart.lost { color: #333; }
+
+  /* Explanation toast */
+  .explain-toast {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 60;
+    background: rgba(20,20,40,0.95);
+    border: 2px solid #ff3131;
+    border-radius: 12px;
+    padding: 16px 24px;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 0 30px rgba(255,49,49,0.4);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .explain-toast.show { opacity: 1; }
+
+  /* Combo display */
+  .combo-display {
+    position: fixed;
+    top: 50px;
+    right: 16px;
+    z-index: 30;
+    text-align: right;
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.3); }
+  }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .gate-btn { padding: 6px 2px; min-height: 56px; font-size: 11px; }
+    .gate-btn .gate-label { font-size: 11px; }
+    .gate-btn .key-hint { display: none; }
+    .hud-bar { padding: 6px 8px; font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Game Canvas -->
+<canvas id="game-canvas"></canvas>
+
+<!-- HUD Bar -->
+<div class="hud-bar" id="hud">
+  <div class="flex items-center gap-4">
+    <div>
+      <span class="arcade-font text-xs opacity-60">SCORE</span>
+      <div class="arcade-font text-lg neon-yellow" id="score-display">0</div>
+    </div>
+    <div>
+      <span class="arcade-font text-xs opacity-60">LEVEL</span>
+      <div class="arcade-font text-lg" id="level-display">1</div>
+    </div>
+  </div>
+  <div id="lives-display" class="flex items-center text-xl"></div>
+</div>
+
+<!-- Combo Display -->
+<div class="combo-display" id="combo-display"></div>
+
+<!-- Gate Area -->
+<div class="gate-area" id="gate-area">
+  <div class="grid grid-cols-4 gap-2 max-w-2xl mx-auto">
+    <button class="gate-btn gate-op-plus" data-gate="op_plus" onclick="handleGateClick('op_plus')">
+      <i class="fa-solid fa-plus text-green-400 text-lg mb-1"></i>
+      <span class="gate-label font-bold text-green-400 text-xs">Operating (+)</span>
+      <span class="key-hint text-green-400">[Q]</span>
+    </button>
+    <button class="gate-btn gate-op-minus" data-gate="op_minus" onclick="handleGateClick('op_minus')">
+      <i class="fa-solid fa-minus text-red-400 text-lg mb-1"></i>
+      <span class="gate-label font-bold text-red-400 text-xs">Operating (-)</span>
+      <span class="key-hint text-red-400">[W]</span>
+    </button>
+    <button class="gate-btn gate-investing" data-gate="investing" onclick="handleGateClick('investing')">
+      <i class="fa-solid fa-chart-line text-cyan-400 text-lg mb-1"></i>
+      <span class="gate-label font-bold text-cyan-400 text-xs">Investing</span>
+      <span class="key-hint text-cyan-400">[E]</span>
+    </button>
+    <button class="gate-btn gate-financing" data-gate="financing" onclick="handleGateClick('financing')">
+      <i class="fa-solid fa-university text-purple-400 text-lg mb-1"></i>
+      <span class="gate-label font-bold text-purple-400 text-xs">Financing</span>
+      <span class="key-hint text-purple-400">[R]</span>
+    </button>
+  </div>
+</div>
+
+<!-- Feedback Popup -->
+<div class="feedback-popup" id="feedback-popup">
+  <div id="feedback-text" class="arcade-font text-2xl"></div>
+</div>
+
+<!-- Explanation Toast -->
+<div class="explain-toast" id="explain-toast">
+  <div class="arcade-font text-red-400 text-sm mb-2"><i class="fa-solid fa-circle-exclamation"></i> Wrong!</div>
+  <div id="explain-text" class="text-sm leading-relaxed"></div>
+</div>
+
+<!-- Start Screen Overlay -->
+<div class="overlay" id="start-screen">
+  <div class="text-center px-4 max-w-lg">
+    <div class="mb-4">
+      <i class="fa-solid fa-water text-cyan-400 text-5xl mb-4" style="animation: pulse-glow 2s infinite;"></i>
+    </div>
+    <h1 class="arcade-font text-xl sm:text-2xl neon-blue mb-2 leading-relaxed">CASH FLOW</h1>
+    <h1 class="arcade-font text-xl sm:text-2xl neon-blue mb-6 leading-relaxed">RIVER</h1>
+    <p class="text-cyan-200 opacity-80 text-sm mb-2 arcade-font">Indirect Method Master</p>
+    <p class="text-gray-400 text-sm mb-8">Sort accounting items into the correct<br>Cash Flow Statement categories!</p>
+    <div class="mb-6 text-left bg-gray-900/60 rounded-lg p-4 text-xs text-gray-300 space-y-1">
+      <p><span class="text-green-400 font-bold">Q</span> Operating (+) &nbsp; <span class="text-red-400 font-bold">W</span> Operating (-)</p>
+      <p><span class="text-cyan-400 font-bold">E</span> Investing &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="text-purple-400 font-bold">R</span> Financing</p>
+      <p class="mt-2 opacity-60">Or tap/click the buttons below.</p>
+    </div>
+    <button onclick="startGame()" class="arcade-font text-sm bg-cyan-600 hover:bg-cyan-500 text-white px-8 py-3 rounded-lg transition-all hover:scale-105 shadow-lg shadow-cyan-600/40">
+      <i class="fa-solid fa-play mr-2"></i>START
+    </button>
+  </div>
+</div>
+
+<!-- Game Over Overlay -->
+<div class="overlay hidden" id="gameover-screen">
+  <div class="text-center px-4 max-w-lg">
+    <i class="fa-solid fa-skull-crossbones text-red-400 text-5xl mb-6"></i>
+    <h2 class="arcade-font text-2xl neon-red mb-4">GAME OVER</h2>
+    <div class="bg-gray-900/60 rounded-lg p-6 mb-6">
+      <p class="text-gray-400 text-sm mb-1">FINAL SCORE</p>
+      <p class="arcade-font text-3xl neon-yellow mb-4" id="final-score">0</p>
+      <div class="grid grid-cols-3 gap-4 text-center">
+        <div>
+          <p class="text-gray-500 text-xs">Correct</p>
+          <p class="arcade-font text-green-400" id="final-correct">0</p>
+        </div>
+        <div>
+          <p class="text-gray-500 text-xs">Wrong</p>
+          <p class="arcade-font text-red-400" id="final-wrong">0</p>
+        </div>
+        <div>
+          <p class="text-gray-500 text-xs">Max Combo</p>
+          <p class="arcade-font text-cyan-400" id="final-combo">0</p>
+        </div>
+      </div>
+    </div>
+    <button onclick="restartGame()" class="arcade-font text-sm bg-cyan-600 hover:bg-cyan-500 text-white px-8 py-3 rounded-lg transition-all hover:scale-105 shadow-lg shadow-cyan-600/40">
+      <i class="fa-solid fa-rotate-right mr-2"></i>RETRY
+    </button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// DATA: Accounting Items
+// ============================================================
+const ITEMS_DATA = [
+  // Operating (+) - Add back to Net Income
+  {
+    text: "Depreciation Expense",
+    category: "op_plus",
+    explanation: "Depreciation is a non-cash expense. Add it back to Net Income under Operating Activities."
+  },
+  {
+    text: "Amortization Expense",
+    category: "op_plus",
+    explanation: "Amortization is a non-cash expense, just like depreciation. Add back to Net Income."
+  },
+  {
+    text: "Loss on Sale of Equipment",
+    category: "op_plus",
+    explanation: "Losses on asset sales are non-operating. Add back to Operating CF; the cash effect goes to Investing."
+  },
+  {
+    text: "Loss on Sale of Land",
+    category: "op_plus",
+    explanation: "Loss on sale is non-operating. Add back to Net Income; the actual cash is in Investing CF."
+  },
+  {
+    text: "Amortization of Bond Discount",
+    category: "op_plus",
+    explanation: "Bond discount amortization increases interest expense but is non-cash. Add back to Operating CF."
+  },
+  {
+    text: "Decrease in Accounts Receivable",
+    category: "op_plus",
+    explanation: "A/R decreased = cash was collected. This is a source of cash, so add to Operating CF."
+  },
+  {
+    text: "Increase in Accounts Payable",
+    category: "op_plus",
+    explanation: "A/P increased = less cash paid out. This conserves cash, so add to Operating CF."
+  },
+  {
+    text: "Decrease in Inventory",
+    category: "op_plus",
+    explanation: "Inventory decreased = goods were sold (converted to cash). Add to Operating CF."
+  },
+  {
+    text: "Increase in Accrued Liabilities",
+    category: "op_plus",
+    explanation: "Accrued liabilities increased = expenses recognized but not yet paid. Saves cash, so add back."
+  },
+  {
+    text: "Deferred Tax Liability Increase",
+    category: "op_plus",
+    explanation: "Increase in deferred tax liability means taxes expensed but not paid yet. Add back to Operating CF."
+  },
+  {
+    text: "Impairment Loss",
+    category: "op_plus",
+    explanation: "Impairment is a non-cash write-down. Add back to Net Income under Operating Activities."
+  },
+
+  // Operating (-) - Deduct from Net Income
+  {
+    text: "Gain on Sale of Equipment",
+    category: "op_minus",
+    explanation: "Gains on asset sales are non-operating. Remove from Operating CF to avoid double-counting (cash goes to Investing)."
+  },
+  {
+    text: "Gain on Sale of Investment",
+    category: "op_minus",
+    explanation: "Investment sale gains are non-operating. Deduct from Operating CF; cash proceeds go to Investing."
+  },
+  {
+    text: "Increase in Accounts Receivable",
+    category: "op_minus",
+    explanation: "A/R increased = revenue recognized but cash not yet collected. Deduct from Operating CF."
+  },
+  {
+    text: "Decrease in Accounts Payable",
+    category: "op_minus",
+    explanation: "A/P decreased = cash was paid out. This uses cash, so deduct from Operating CF."
+  },
+  {
+    text: "Increase in Inventory",
+    category: "op_minus",
+    explanation: "Inventory increased = cash was spent buying goods. Deduct from Operating CF."
+  },
+  {
+    text: "Increase in Prepaid Expenses",
+    category: "op_minus",
+    explanation: "Prepaid expenses increased = cash paid in advance. Deduct from Operating CF."
+  },
+  {
+    text: "Decrease in Unearned Revenue",
+    category: "op_minus",
+    explanation: "Unearned revenue decreased = revenue was earned (liability reduced) without new cash inflow. Deduct from Operating CF."
+  },
+  {
+    text: "Amortization of Bond Premium",
+    category: "op_minus",
+    explanation: "Bond premium amortization reduces interest expense but is non-cash. Deduct from Operating CF."
+  },
+
+  // Investing
+  {
+    text: "Purchase of Equipment",
+    category: "investing",
+    explanation: "Buying equipment is a capital expenditure. Cash outflow under Investing Activities."
+  },
+  {
+    text: "Proceeds from Sale of Building",
+    category: "investing",
+    explanation: "Cash received from selling a building is an Investing Activity inflow."
+  },
+  {
+    text: "Purchase of Land",
+    category: "investing",
+    explanation: "Buying land is a long-term asset purchase. Cash outflow under Investing Activities."
+  },
+  {
+    text: "Purchase of Available-for-Sale Securities",
+    category: "investing",
+    explanation: "Purchasing investment securities is an Investing Activity cash outflow."
+  },
+  {
+    text: "Proceeds from Sale of Patent",
+    category: "investing",
+    explanation: "Cash received from selling an intangible asset goes under Investing Activities."
+  },
+  {
+    text: "Loan Made to Another Company",
+    category: "investing",
+    explanation: "Making a loan (note receivable) is an Investing Activity cash outflow."
+  },
+  {
+    text: "Collection of Note Receivable",
+    category: "investing",
+    explanation: "Collecting principal on a note receivable is an Investing Activity cash inflow."
+  },
+
+  // Financing
+  {
+    text: "Payment of Dividends",
+    category: "financing",
+    explanation: "Paying dividends to shareholders is a Financing Activity cash outflow."
+  },
+  {
+    text: "Issuance of Common Stock",
+    category: "financing",
+    explanation: "Issuing stock raises capital from investors. Cash inflow under Financing Activities."
+  },
+  {
+    text: "Issuance of Bonds Payable",
+    category: "financing",
+    explanation: "Issuing bonds raises debt capital. Cash inflow under Financing Activities."
+  },
+  {
+    text: "Repayment of Long-term Debt",
+    category: "financing",
+    explanation: "Repaying debt principal is a Financing Activity cash outflow."
+  },
+  {
+    text: "Treasury Stock Purchase",
+    category: "financing",
+    explanation: "Buying back company stock is a Financing Activity cash outflow."
+  },
+  {
+    text: "Proceeds from Bank Loan",
+    category: "financing",
+    explanation: "Borrowing from a bank is a Financing Activity cash inflow."
+  },
+  {
+    text: "Payment of Lease Liability (Principal)",
+    category: "financing",
+    explanation: "Paying the principal portion of a lease liability is a Financing Activity cash outflow."
+  },
+];
+
+// ============================================================
+// GAME STATE
+// ============================================================
+const canvas = document.getElementById('game-canvas');
+const ctx = canvas.getContext('2d');
+
+let gameState = {
+  running: false,
+  score: 0,
+  lives: 5,
+  maxLives: 5,
+  combo: 0,
+  maxCombo: 0,
+  correct: 0,
+  wrong: 0,
+  level: 1,
+  baseSpeed: 0.6,
+  currentSpeed: 0.6,
+  spawnInterval: 3000,
+  lastSpawn: 0,
+  items: [],
+  particles: [],
+  riverOffset: 0,
+  itemQueue: [],
+  activeItem: null,
+};
+
+// Category colors
+const CATEGORY_COLORS = {
+  op_plus:   { main: '#39ff14', bg: 'rgba(57,255,20,', name: 'Operating (+)' },
+  op_minus:  { main: '#ff3131', bg: 'rgba(255,49,49,', name: 'Operating (-)' },
+  investing: { main: '#00d4ff', bg: 'rgba(0,212,255,', name: 'Investing' },
+  financing: { main: '#bf40ff', bg: 'rgba(191,64,255,', name: 'Financing' },
+};
+
+// ============================================================
+// CANVAS SETUP
+// ============================================================
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+// ============================================================
+// RIVER BACKGROUND
+// ============================================================
+function drawRiver(dt) {
+  const w = canvas.width;
+  const h = canvas.height;
+
+  // Dark background
+  ctx.fillStyle = '#0a0a1a';
+  ctx.fillRect(0, 0, w, h);
+
+  // River flow animation
+  gameState.riverOffset += dt * 60;
+  if (gameState.riverOffset > 80) gameState.riverOffset -= 80;
+
+  // Draw flowing river lines
+  const riverLeft = w * 0.08;
+  const riverRight = w * 0.92;
+  const riverWidth = riverRight - riverLeft;
+
+  // River base gradient
+  const grad = ctx.createLinearGradient(riverLeft, 0, riverRight, 0);
+  grad.addColorStop(0, 'rgba(0,30,60,0.6)');
+  grad.addColorStop(0.3, 'rgba(0,50,80,0.4)');
+  grad.addColorStop(0.5, 'rgba(0,60,100,0.5)');
+  grad.addColorStop(0.7, 'rgba(0,50,80,0.4)');
+  grad.addColorStop(1, 'rgba(0,30,60,0.6)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(riverLeft, 0, riverWidth, h);
+
+  // Flow lines
+  ctx.strokeStyle = 'rgba(0,150,255,0.08)';
+  ctx.lineWidth = 1;
+  const lineSpacing = 40;
+  const numLines = Math.ceil(riverWidth / lineSpacing);
+
+  for (let i = 0; i < numLines; i++) {
+    const baseX = riverLeft + i * lineSpacing + 20;
+    ctx.beginPath();
+    for (let y = -80; y < h + 80; y += 5) {
+      const offsetY = y + gameState.riverOffset;
+      const wave = Math.sin((offsetY * 0.02) + (i * 0.5)) * 8;
+      const x = baseX + wave;
+      if (y === -80) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+
+  // Floating particles (bubbles)
+  ctx.fillStyle = 'rgba(100,200,255,0.12)';
+  for (let i = 0; i < 20; i++) {
+    const seed = i * 137.508;
+    const x = riverLeft + ((seed * 7.31) % riverWidth);
+    const y = ((seed * 3.17 + gameState.riverOffset * (0.3 + (i % 5) * 0.1)) % (h + 40)) - 20;
+    const r = 1.5 + (i % 4);
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // River bank edges (subtle glow)
+  const bankGradL = ctx.createLinearGradient(riverLeft - 20, 0, riverLeft + 30, 0);
+  bankGradL.addColorStop(0, 'rgba(0,100,180,0)');
+  bankGradL.addColorStop(0.5, 'rgba(0,100,180,0.15)');
+  bankGradL.addColorStop(1, 'rgba(0,100,180,0)');
+  ctx.fillStyle = bankGradL;
+  ctx.fillRect(riverLeft - 20, 0, 50, h);
+
+  const bankGradR = ctx.createLinearGradient(riverRight - 30, 0, riverRight + 20, 0);
+  bankGradR.addColorStop(0, 'rgba(0,100,180,0)');
+  bankGradR.addColorStop(0.5, 'rgba(0,100,180,0.15)');
+  bankGradR.addColorStop(1, 'rgba(0,100,180,0)');
+  ctx.fillStyle = bankGradR;
+  ctx.fillRect(riverRight - 30, 0, 50, h);
+
+  // "Net Income" label flowing
+  ctx.save();
+  ctx.globalAlpha = 0.07;
+  ctx.font = 'bold 48px Roboto';
+  ctx.fillStyle = '#fff';
+  ctx.textAlign = 'center';
+  const niY = ((gameState.riverOffset * 2) % (h + 200)) - 100;
+  ctx.fillText('NET INCOME', w / 2, niY);
+  ctx.fillText('NET INCOME', w / 2, niY + h / 2 + 100);
+  ctx.restore();
+
+  // Judgment line
+  const lineY = h - 140;
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([10, 10]);
+  ctx.beginPath();
+  ctx.moveTo(riverLeft, lineY);
+  ctx.lineTo(riverRight, lineY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // "GATE LINE" label
+  ctx.font = '10px Roboto';
+  ctx.fillStyle = 'rgba(255,255,255,0.2)';
+  ctx.textAlign = 'left';
+  ctx.fillText('GATE LINE', riverLeft + 5, lineY - 5);
+}
+
+// ============================================================
+// ITEM RENDERING
+// ============================================================
+function drawItem(item) {
+  const w = canvas.width;
+  const catColor = CATEGORY_COLORS[item.data.category];
+
+  // Item card
+  const cardW = Math.min(320, w * 0.7);
+  const cardH = 48;
+  const x = w / 2;
+  const y = item.y;
+
+  // Glow behind
+  ctx.save();
+  ctx.shadowColor = 'rgba(255,255,255,0.3)';
+  ctx.shadowBlur = 20;
+
+  // Card background
+  ctx.fillStyle = 'rgba(15,15,35,0.9)';
+  roundRect(ctx, x - cardW / 2, y - cardH / 2, cardW, cardH, 10);
+  ctx.fill();
+
+  // Border
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 1.5;
+  roundRect(ctx, x - cardW / 2, y - cardH / 2, cardW, cardH, 10);
+  ctx.stroke();
+  ctx.restore();
+
+  // Dollar icon
+  ctx.font = '18px FontAwesome';
+  ctx.fillStyle = 'rgba(255,220,100,0.6)';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('\uf155', x - cardW / 2 + 22, y);
+
+  // Text
+  ctx.font = 'bold 14px Roboto';
+  ctx.fillStyle = '#fff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(item.data.text, x + 8, y);
+
+  // Progress bar at bottom of card (urgency indicator)
+  const lineY = canvas.height - 140;
+  const startY = -50;
+  const progress = Math.max(0, Math.min(1, (y - startY) / (lineY - startY)));
+  if (progress > 0.5) {
+    const barW = cardW - 8;
+    const barH = 3;
+    const barX = x - barW / 2;
+    const barY = y + cardH / 2 - 5;
+    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+    ctx.fillRect(barX, barY, barW, barH);
+    const urgency = (progress - 0.5) * 2;
+    const urgColor = urgency > 0.7 ? '#ff3131' : urgency > 0.4 ? '#ffe600' : '#39ff14';
+    ctx.fillStyle = urgColor;
+    ctx.fillRect(barX, barY, barW * urgency, barH);
+  }
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+// ============================================================
+// PARTICLES
+// ============================================================
+function spawnParticles(x, y, color, count) {
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 1 + Math.random() * 4;
+    gameState.particles.push({
+      x, y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 2,
+      life: 1,
+      decay: 0.015 + Math.random() * 0.025,
+      size: 2 + Math.random() * 4,
+      color,
+    });
+  }
+}
+
+function updateAndDrawParticles(dt) {
+  for (let i = gameState.particles.length - 1; i >= 0; i--) {
+    const p = gameState.particles[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.05;
+    p.life -= p.decay;
+    if (p.life <= 0) {
+      gameState.particles.splice(i, 1);
+      continue;
+    }
+    ctx.globalAlpha = p.life;
+    ctx.fillStyle = p.color;
+    ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+  }
+  ctx.globalAlpha = 1;
+}
+
+// ============================================================
+// UI UPDATES
+// ============================================================
+function updateHUD() {
+  document.getElementById('score-display').textContent = gameState.score.toLocaleString();
+  document.getElementById('level-display').textContent = gameState.level;
+
+  // Lives
+  let heartsHTML = '';
+  for (let i = 0; i < gameState.maxLives; i++) {
+    heartsHTML += `<i class="fa-solid fa-heart heart ${i >= gameState.lives ? 'lost' : ''}"></i>`;
+  }
+  document.getElementById('lives-display').innerHTML = heartsHTML;
+
+  // Combo
+  const comboEl = document.getElementById('combo-display');
+  if (gameState.combo >= 3) {
+    const multiplier = getMultiplier();
+    comboEl.innerHTML = `
+      <div class="arcade-font text-xs text-cyan-400 opacity-80">COMBO</div>
+      <div class="arcade-font text-2xl neon-yellow">${gameState.combo}</div>
+      <div class="arcade-font text-xs neon-green">x${multiplier.toFixed(1)}</div>
+    `;
+  } else {
+    comboEl.innerHTML = '';
+  }
+}
+
+function getMultiplier() {
+  if (gameState.combo >= 20) return 4.0;
+  if (gameState.combo >= 15) return 3.0;
+  if (gameState.combo >= 10) return 2.5;
+  if (gameState.combo >= 7) return 2.0;
+  if (gameState.combo >= 5) return 1.5;
+  if (gameState.combo >= 3) return 1.2;
+  return 1.0;
+}
+
+function showFeedback(text, color) {
+  const el = document.getElementById('feedback-popup');
+  const textEl = document.getElementById('feedback-text');
+  textEl.textContent = text;
+  textEl.style.color = color;
+  textEl.style.textShadow = `0 0 10px ${color}, 0 0 20px ${color}`;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 800);
+}
+
+function showExplanation(item, playerChoice) {
+  const el = document.getElementById('explain-toast');
+  const textEl = document.getElementById('explain-text');
+  const correctName = CATEGORY_COLORS[item.data.category].name;
+  const chosenName = CATEGORY_COLORS[playerChoice].name;
+  textEl.innerHTML = `
+    <p class="text-white font-bold mb-1">"${item.data.text}"</p>
+    <p class="text-gray-400 text-xs mb-2">You chose: <span class="text-red-400">${chosenName}</span> | Correct: <span class="text-green-400">${correctName}</span></p>
+    <p class="text-cyan-200">${item.data.explanation}</p>
+  `;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+function showMissExplanation(item) {
+  const el = document.getElementById('explain-toast');
+  const textEl = document.getElementById('explain-text');
+  const correctName = CATEGORY_COLORS[item.data.category].name;
+  textEl.innerHTML = `
+    <p class="text-white font-bold mb-1">"${item.data.text}"</p>
+    <p class="text-yellow-400 text-xs mb-2">Time's up! Correct: <span class="text-green-400">${correctName}</span></p>
+    <p class="text-cyan-200">${item.data.explanation}</p>
+  `;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+// ============================================================
+// ITEM SPAWNING
+// ============================================================
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function refillQueue() {
+  gameState.itemQueue = shuffleArray(ITEMS_DATA);
+}
+
+function spawnItem() {
+  if (gameState.activeItem) return; // Only one item at a time
+
+  if (gameState.itemQueue.length === 0) refillQueue();
+  const data = gameState.itemQueue.pop();
+
+  gameState.activeItem = {
+    data,
+    y: -40,
+    alive: true,
+  };
+  gameState.items.push(gameState.activeItem);
+}
+
+// ============================================================
+// GAME LOGIC
+// ============================================================
+function handleGateClick(gate) {
+  if (!gameState.running) return;
+
+  const item = gameState.activeItem;
+  if (!item || !item.alive) return;
+
+  // Flash button
+  const btn = document.querySelector(`[data-gate="${gate}"]`);
+  if (btn) {
+    btn.classList.add('active');
+    setTimeout(() => btn.classList.remove('active'), 150);
+  }
+
+  if (item.data.category === gate) {
+    // CORRECT
+    const multiplier = getMultiplier();
+    const basePoints = 100;
+    const points = Math.floor(basePoints * multiplier);
+    gameState.score += points;
+    gameState.combo++;
+    gameState.correct++;
+    if (gameState.combo > gameState.maxCombo) gameState.maxCombo = gameState.combo;
+
+    const color = CATEGORY_COLORS[gate].main;
+    spawnParticles(canvas.width / 2, item.y, color, 20);
+
+    const feedbacks = ['Nice Check!', 'Correct!', 'Perfect!', 'Excellent!', 'Well Done!'];
+    const fb = gameState.combo >= 10 ? 'AMAZING!!' : gameState.combo >= 5 ? 'ON FIRE!' : feedbacks[Math.floor(Math.random() * feedbacks.length)];
+    showFeedback(`${fb} +${points}`, color);
+
+    item.alive = false;
+    gameState.activeItem = null;
+  } else {
+    // WRONG
+    gameState.lives--;
+    gameState.combo = 0;
+    gameState.wrong++;
+
+    spawnParticles(canvas.width / 2, item.y, '#ff3131', 15);
+    showFeedback('WRONG!', '#ff3131');
+    showExplanation(item, gate);
+
+    item.alive = false;
+    gameState.activeItem = null;
+
+    if (gameState.lives <= 0) {
+      endGame();
+      return;
+    }
+  }
+
+  updateHUD();
+  updateDifficulty();
+}
+
+function updateDifficulty() {
+  const totalAnswered = gameState.correct + gameState.wrong;
+  gameState.level = Math.floor(totalAnswered / 5) + 1;
+  gameState.currentSpeed = gameState.baseSpeed + (gameState.level - 1) * 0.12;
+  gameState.spawnInterval = Math.max(1500, 3000 - (gameState.level - 1) * 150);
+}
+
+// ============================================================
+// KEYBOARD INPUT
+// ============================================================
+document.addEventListener('keydown', (e) => {
+  if (!gameState.running) {
+    if (e.key === ' ' || e.key === 'Enter') {
+      const startScreen = document.getElementById('start-screen');
+      const gameOverScreen = document.getElementById('gameover-screen');
+      if (!startScreen.classList.contains('hidden')) {
+        startGame();
+      } else if (!gameOverScreen.classList.contains('hidden')) {
+        restartGame();
+      }
+    }
+    return;
+  }
+
+  const keyMap = { 'q': 'op_plus', 'w': 'op_minus', 'e': 'investing', 'r': 'financing' };
+  const gate = keyMap[e.key.toLowerCase()];
+  if (gate) {
+    e.preventDefault();
+    handleGateClick(gate);
+  }
+});
+
+// ============================================================
+// GAME LOOP
+// ============================================================
+let lastTime = 0;
+
+function gameLoop(timestamp) {
+  if (!gameState.running) return;
+
+  const dt = lastTime ? (timestamp - lastTime) / 1000 : 0.016;
+  lastTime = timestamp;
+
+  // Clear and draw river
+  drawRiver(dt);
+
+  // Spawn items
+  if (!gameState.activeItem) {
+    if (!gameState.lastSpawn || (timestamp - gameState.lastSpawn > gameState.spawnInterval)) {
+      spawnItem();
+      gameState.lastSpawn = timestamp;
+    }
+  }
+
+  // Update items
+  const lineY = canvas.height - 140;
+  for (let i = gameState.items.length - 1; i >= 0; i--) {
+    const item = gameState.items[i];
+    if (!item.alive) {
+      gameState.items.splice(i, 1);
+      continue;
+    }
+
+    item.y += gameState.currentSpeed * dt * 120;
+
+    // Check if passed the line
+    if (item.y > lineY + 30) {
+      // Missed!
+      item.alive = false;
+      gameState.activeItem = null;
+      gameState.lives--;
+      gameState.combo = 0;
+      gameState.wrong++;
+
+      showFeedback("MISSED!", '#ffe600');
+      showMissExplanation(item);
+
+      if (gameState.lives <= 0) {
+        endGame();
+        return;
+      }
+      updateHUD();
+      gameState.items.splice(i, 1);
+      continue;
+    }
+
+    drawItem(item);
+  }
+
+  // Draw particles
+  updateAndDrawParticles(dt);
+
+  requestAnimationFrame(gameLoop);
+}
+
+// ============================================================
+// GAME STATE MANAGEMENT
+// ============================================================
+function startGame() {
+  document.getElementById('start-screen').classList.add('hidden');
+  document.getElementById('gameover-screen').classList.add('hidden');
+
+  gameState = {
+    running: true,
+    score: 0,
+    lives: 5,
+    maxLives: 5,
+    combo: 0,
+    maxCombo: 0,
+    correct: 0,
+    wrong: 0,
+    level: 1,
+    baseSpeed: 0.6,
+    currentSpeed: 0.6,
+    spawnInterval: 3000,
+    lastSpawn: 0,
+    items: [],
+    particles: [],
+    riverOffset: gameState.riverOffset || 0,
+    itemQueue: [],
+    activeItem: null,
+  };
+
+  refillQueue();
+  updateHUD();
+  lastTime = 0;
+  requestAnimationFrame(gameLoop);
+}
+
+function endGame() {
+  gameState.running = false;
+
+  document.getElementById('final-score').textContent = gameState.score.toLocaleString();
+  document.getElementById('final-correct').textContent = gameState.correct;
+  document.getElementById('final-wrong').textContent = gameState.wrong;
+  document.getElementById('final-combo').textContent = gameState.maxCombo;
+
+  setTimeout(() => {
+    document.getElementById('gameover-screen').classList.remove('hidden');
+  }, 500);
+}
+
+function restartGame() {
+  startGame();
+}
+
+// ============================================================
+// BACKGROUND ANIMATION (for start screen)
+// ============================================================
+function bgLoop(timestamp) {
+  if (gameState.running) return;
+  const dt = lastTime ? (timestamp - lastTime) / 1000 : 0.016;
+  lastTime = timestamp;
+  drawRiver(dt);
+  requestAnimationFrame(bgLoop);
+}
+
+// Start background animation
+lastTime = 0;
+requestAnimationFrame(bgLoop);
+updateHUD();
+</script>
+</body>
+</html>
