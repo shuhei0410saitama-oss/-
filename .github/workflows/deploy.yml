@@ -19,11 +19,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Copy game files to build directory
-        run: |
-          mkdir -p dist
-          cp index.html dist/
-          cp cash-flow-river.html dist/
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
 
       - uses: actions/upload-pages-artifact@v3
         with:

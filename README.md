@@ -6,7 +6,7 @@
 
 ## 🎮 遊び方
 
-[**ゲームをプレイ →**](https://shuhei0410saitama-oss.github.io/-/)
+[**ゲームをプレイ →**](https://shuhei0410saitama-oss.github.io/-/cash-flow-river.html)
 
 画面上部から流れてくる会計取引を、正しいキャッシュフロー区分に素早く仕分けましょう。
 
