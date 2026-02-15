@@ -60,6 +60,20 @@ export default function Home() {
               受験ガイドを見る
             </Link>
           </div>
+
+          {/* Game Banner */}
+          <div className="mt-8 inline-flex items-center gap-3 bg-dark-card border border-dark-border rounded-xl px-6 py-3">
+            <span className="text-2xl">🎮</span>
+            <div className="text-left">
+              <p className="text-sm text-text-secondary">ゲームで学ぶキャッシュフロー計算書</p>
+              <a
+                href={import.meta.env.BASE_URL + "cash-flow-river.html"}
+                className="text-accent hover:text-accent-light font-medium transition-colors duration-200"
+              >
+                Cash Flow River をプレイ →
+              </a>
+            </div>
+          </div>
         </div>
       </section>
 

@@ -7,6 +7,8 @@ const navLinks = [
   { to: "/about", label: "About" },
 ];
 
+const gameLink = { href: import.meta.env.BASE_URL + "cash-flow-river.html", label: "CF Game" };
+
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { pathname } = useLocation();
@@ -38,6 +40,12 @@ export default function Header() {
                 {link.label}
               </Link>
             ))}
+            <a
+              href={gameLink.href}
+              className="text-sm font-medium bg-accent text-white rounded-md px-3 py-1.5 hover:bg-accent-hover transition-colors duration-200"
+            >
+              {gameLink.label}
+            </a>
           </nav>
 
           {/* Mobile hamburger button */}
@@ -87,6 +95,13 @@ export default function Header() {
                 {link.label}
               </Link>
             ))}
+            <a
+              href={gameLink.href}
+              className="block px-3 py-2 rounded-md text-sm font-medium text-accent hover:text-accent-light transition-colors duration-200"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              {gameLink.label}
+            </a>
           </div>
         </nav>
       )}

@@ -1,73 +1,77 @@
-# React + TypeScript + Vite
+# Cash Flow River - Indirect Method Master 💰🌊
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**USCPA（米国公認会計士）FAR科目対策用のブラウザゲーム**
 
-Currently, two official plugins are available:
+キャッシュフロー計算書（間接法）の学習を、アーケードゲーム感覚で楽しく習得できます。
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🎮 遊び方
 
-## React Compiler
+[**ゲームをプレイ →**](https://shuhei0410saitama-oss.github.io/-/cash-flow-river.html)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+画面上部から流れてくる会計取引を、正しいキャッシュフロー区分に素早く仕分けましょう。
 
-## Expanding the ESLint configuration
+### 操作方法
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **キーボード:** Q / W / E / R
+- **タッチ/クリック:** 画面下部のボタン
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+| キー | 区分 | 説明 |
+|------|------|------|
+| Q | Operating (+) | 営業CFの加算（減価償却費、売掛金の減少など） |
+| W | Operating (-) | 営業CFの減算（固定資産売却益、在庫の増加など） |
+| E | Investing | 投資CF（設備の購入・売却による収入など） |
+| R | Financing | 財務CF（配当金の支払、社債の発行など） |
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## 🎯 ゲームの特徴
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- **33種類の会計取引**を収録（Operating 19、Investing 7、Financing 7）
+- **日本語解説**付き - 不正解時に詳しい理由を表示
+- **コンボシステム** - 連続正解で得点倍率アップ（最大x4.0）
+- **難易度自動調整** - レベルが上がるほどスピードアップ
+- **ネオン風アーケードUI** - 美しいビジュアルで集中力アップ
+- **レスポンシブ対応** - スマホ・PC両対応
+
+## 📚 学習内容
+
+### Operating Activities（営業CF）
+- 非現金費用の加算（Depreciation, Amortization）
+- 売却損益の調整（Gain/Loss on Sale）
+- 運転資本の増減（A/R, A/P, Inventory, Prepaid Expenses）
+- 繰延税金負債の変動
+
+### Investing Activities（投資CF）
+- 長期資産の取得・処分（Equipment, Land, Building）
+- 有価証券の売買
+- 貸付金の回収
+
+### Financing Activities（財務CF）
+- 株式・社債の発行
+- 配当金の支払
+- 借入金の返済
+- 自己株式の取得
+
+## 🛠️ 技術スタック
+
+- **HTML5 Canvas** - スムーズな2Dアニメーション
+- **Tailwind CSS** - モダンなUIデザイン
+- **Google Fonts (Roboto, Press Start 2P)** - 可読性の高いフォント
+- **FontAwesome** - アイコン表示
+
+## 🚀 デプロイ
+
+このリポジトリは GitHub Pages で自動デプロイされます。
+
+```bash
+# ローカルで確認する場合
+open index.html
+# または
+open cash-flow-river.html
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 📝 ライセンス
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+MIT License
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+---
+
+Made with ❤️ for USCPA FAR exam takers
