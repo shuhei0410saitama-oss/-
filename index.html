@@ -248,7 +248,7 @@
 
 <!-- Explanation Toast -->
 <div class="explain-toast" id="explain-toast">
-  <div class="arcade-font text-red-400 text-sm mb-2"><i class="fa-solid fa-circle-exclamation"></i> Wrong!</div>
+  <div class="arcade-font text-red-400 text-sm mb-2"><i class="fa-solid fa-circle-exclamation"></i> 不正解！</div>
   <div id="explain-text" class="text-sm leading-relaxed"></div>
 </div>
 
@@ -307,177 +307,177 @@
 // DATA: Accounting Items
 // ============================================================
 const ITEMS_DATA = [
-  // Operating (+) - Add back to Net Income
+  // Operating (+) - 営業CFの加算
   {
     text: "Depreciation Expense",
     category: "op_plus",
-    explanation: "Depreciation is a non-cash expense. Add it back to Net Income under Operating Activities."
+    explanation: "減価償却費は非現金費用（Non-cash expense）です。P/Lでは費用計上されていますが、実際のキャッシュは減っていないため、営業CFで当期純利益に加算します。"
   },
   {
     text: "Amortization Expense",
     category: "op_plus",
-    explanation: "Amortization is a non-cash expense, just like depreciation. Add back to Net Income."
+    explanation: "償却費は減価償却と同様、非現金費用です。無形資産の償却も当期純利益に加算して調整します。"
   },
   {
     text: "Loss on Sale of Equipment",
     category: "op_plus",
-    explanation: "Losses on asset sales are non-operating. Add back to Operating CF; the cash effect goes to Investing."
+    explanation: "設備売却損は営業外の項目です。P/Lで純利益を減らしていますが、実際のキャッシュは投資CFに計上するため、二重計上を防ぐ目的で営業CFに加算（戻し入れ）します。"
   },
   {
     text: "Loss on Sale of Land",
     category: "op_plus",
-    explanation: "Loss on sale is non-operating. Add back to Net Income; the actual cash is in Investing CF."
+    explanation: "土地売却損も営業外項目です。売却損はP/Lで純利益を減少させていますが、キャッシュへの影響は投資CFに反映するため、営業CFで加算します。"
   },
   {
     text: "Amortization of Bond Discount",
     category: "op_plus",
-    explanation: "Bond discount amortization increases interest expense but is non-cash. Add back to Operating CF."
+    explanation: "社債割引（Bond Discount）の償却は、利息費用を増加させますが非現金項目です。実際のキャッシュ支出より多く費用計上しているため、営業CFで加算します。"
   },
   {
     text: "Decrease in Accounts Receivable",
     category: "op_plus",
-    explanation: "A/R decreased = cash was collected. This is a source of cash, so add to Operating CF."
+    explanation: "売掛金（A/R）の減少＝前期より多くの現金を回収した証拠です。キャッシュの源泉となるため、営業CFで加算します。"
   },
   {
     text: "Increase in Accounts Payable",
     category: "op_plus",
-    explanation: "A/P increased = less cash paid out. This conserves cash, so add to Operating CF."
+    explanation: "買掛金（A/P）の増加＝仕入代金の支払いを先送りしている状態です。キャッシュの流出が抑えられているため、営業CFで加算します。"
   },
   {
     text: "Decrease in Inventory",
     category: "op_plus",
-    explanation: "Inventory decreased = goods were sold (converted to cash). Add to Operating CF."
+    explanation: "棚卸資産の減少＝在庫が売却されて現金化された状態です。新たな仕入れより売上が多い＝キャッシュの源泉なので営業CFで加算します。"
   },
   {
     text: "Increase in Accrued Liabilities",
     category: "op_plus",
-    explanation: "Accrued liabilities increased = expenses recognized but not yet paid. Saves cash, so add back."
+    explanation: "未払費用の増加＝費用はP/Lに計上済みですが、まだ現金を支払っていない状態です。キャッシュが節約されているため営業CFで加算します。"
   },
   {
     text: "Deferred Tax Liability Increase",
     category: "op_plus",
-    explanation: "Increase in deferred tax liability means taxes expensed but not paid yet. Add back to Operating CF."
+    explanation: "繰延税金負債（DTL）の増加＝税金費用は計上済みだが実際の納税は将来。キャッシュの支出が先送りされているため営業CFで加算します。"
   },
   {
     text: "Impairment Loss",
     category: "op_plus",
-    explanation: "Impairment is a non-cash write-down. Add back to Net Income under Operating Activities."
+    explanation: "減損損失は非現金の評価損（Non-cash write-down）です。P/Lで純利益を減らしていますが、キャッシュは動いていないため営業CFで加算します。"
   },
 
-  // Operating (-) - Deduct from Net Income
+  // Operating (-) - 営業CFの減算
   {
     text: "Gain on Sale of Equipment",
     category: "op_minus",
-    explanation: "Gains on asset sales are non-operating. Remove from Operating CF to avoid double-counting (cash goes to Investing)."
+    explanation: "設備売却益は営業外の利益です。P/Lで純利益を増やしていますが、売却収入の全額は投資CFに計上します。二重計上を防ぐため、営業CFから減算します。"
   },
   {
     text: "Gain on Sale of Investment",
     category: "op_minus",
-    explanation: "Investment sale gains are non-operating. Deduct from Operating CF; cash proceeds go to Investing."
+    explanation: "投資売却益は営業外項目です。売却収入は投資CFに全額計上するため、純利益に含まれている売却益部分を営業CFから減算します。"
   },
   {
     text: "Increase in Accounts Receivable",
     category: "op_minus",
-    explanation: "A/R increased = revenue recognized but cash not yet collected. Deduct from Operating CF."
+    explanation: "売掛金（A/R）の増加＝売上は計上したが現金は未回収の状態です。純利益ほどキャッシュが入っていないため、営業CFから減算します。"
   },
   {
     text: "Decrease in Accounts Payable",
     category: "op_minus",
-    explanation: "A/P decreased = cash was paid out. This uses cash, so deduct from Operating CF."
+    explanation: "買掛金（A/P）の減少＝前期の未払い分を支払った状態です。キャッシュが流出しているため、営業CFから減算します。"
   },
   {
     text: "Increase in Inventory",
     category: "op_minus",
-    explanation: "Inventory increased = cash was spent buying goods. Deduct from Operating CF."
+    explanation: "棚卸資産の増加＝商品の仕入にキャッシュを使用した状態です。まだ売上（収益）になっていないキャッシュ支出なので、営業CFから減算します。"
   },
   {
     text: "Increase in Prepaid Expenses",
     category: "op_minus",
-    explanation: "Prepaid expenses increased = cash paid in advance. Deduct from Operating CF."
+    explanation: "前払費用の増加＝将来の費用に対してキャッシュを先払いした状態です。P/Lには反映されていないキャッシュ支出なので、営業CFから減算します。"
   },
   {
     text: "Decrease in Unearned Revenue",
     category: "op_minus",
-    explanation: "Unearned revenue decreased = revenue was earned (liability reduced) without new cash inflow. Deduct from Operating CF."
+    explanation: "前受収益の減少＝過去に受け取ったキャッシュに対して収益を認識した状態です。新たなキャッシュ流入なしに純利益が増加しているため、営業CFから減算します。"
   },
   {
     text: "Amortization of Bond Premium",
     category: "op_minus",
-    explanation: "Bond premium amortization reduces interest expense but is non-cash. Deduct from Operating CF."
+    explanation: "社債プレミアムの償却は、利息費用を減少させる非現金項目です。実際のキャッシュ支出より少なく費用計上しているため、営業CFから減算します。"
   },
 
-  // Investing
+  // Investing - 投資CF
   {
     text: "Purchase of Equipment",
     category: "investing",
-    explanation: "Buying equipment is a capital expenditure. Cash outflow under Investing Activities."
+    explanation: "設備の購入は資本的支出（Capital Expenditure）です。長期資産の取得なので投資CFのキャッシュアウトフローに計上します。"
   },
   {
     text: "Proceeds from Sale of Building",
     category: "investing",
-    explanation: "Cash received from selling a building is an Investing Activity inflow."
+    explanation: "建物の売却による収入は、長期資産の処分です。投資CFのキャッシュインフローに計上します。"
   },
   {
     text: "Purchase of Land",
     category: "investing",
-    explanation: "Buying land is a long-term asset purchase. Cash outflow under Investing Activities."
+    explanation: "土地の購入は長期資産の取得です。投資CFのキャッシュアウトフローに計上します。"
   },
   {
     text: "Purchase of Available-for-Sale Securities",
     category: "investing",
-    explanation: "Purchasing investment securities is an Investing Activity cash outflow."
+    explanation: "売却可能有価証券（AFS Securities）の購入は投資活動です。投資CFのキャッシュアウトフローに計上します。"
   },
   {
     text: "Proceeds from Sale of Patent",
     category: "investing",
-    explanation: "Cash received from selling an intangible asset goes under Investing Activities."
+    explanation: "特許権（無形資産）の売却による収入は、投資CFのキャッシュインフローに計上します。"
   },
   {
     text: "Loan Made to Another Company",
     category: "investing",
-    explanation: "Making a loan (note receivable) is an Investing Activity cash outflow."
+    explanation: "他社への貸付（Note Receivable の発生）は投資活動です。投資CFのキャッシュアウトフローに計上します。"
   },
   {
     text: "Collection of Note Receivable",
     category: "investing",
-    explanation: "Collecting principal on a note receivable is an Investing Activity cash inflow."
+    explanation: "貸付金の元本回収は投資活動です。投資CFのキャッシュインフローに計上します（※利息部分は営業CF）。"
   },
 
-  // Financing
+  // Financing - 財務CF
   {
     text: "Payment of Dividends",
     category: "financing",
-    explanation: "Paying dividends to shareholders is a Financing Activity cash outflow."
+    explanation: "株主への配当金の支払いは、株主への利益還元です。財務CFのキャッシュアウトフローに計上します。"
   },
   {
     text: "Issuance of Common Stock",
     category: "financing",
-    explanation: "Issuing stock raises capital from investors. Cash inflow under Financing Activities."
+    explanation: "普通株式の発行は、投資家からの資本調達です。財務CFのキャッシュインフローに計上します。"
   },
   {
     text: "Issuance of Bonds Payable",
     category: "financing",
-    explanation: "Issuing bonds raises debt capital. Cash inflow under Financing Activities."
+    explanation: "社債の発行は、負債による資金調達（Debt financing）です。財務CFのキャッシュインフローに計上します。"
   },
   {
     text: "Repayment of Long-term Debt",
     category: "financing",
-    explanation: "Repaying debt principal is a Financing Activity cash outflow."
+    explanation: "長期借入金の元本返済は財務活動です。財務CFのキャッシュアウトフローに計上します。"
   },
   {
     text: "Treasury Stock Purchase",
     category: "financing",
-    explanation: "Buying back company stock is a Financing Activity cash outflow."
+    explanation: "自己株式（Treasury Stock）の取得は、株主への資本還元です。財務CFのキャッシュアウトフローに計上します。"
   },
   {
     text: "Proceeds from Bank Loan",
     category: "financing",
-    explanation: "Borrowing from a bank is a Financing Activity cash inflow."
+    explanation: "銀行からの借入は負債による資金調達です。財務CFのキャッシュインフローに計上します。"
   },
   {
     text: "Payment of Lease Liability (Principal)",
     category: "financing",
-    explanation: "Paying the principal portion of a lease liability is a Financing Activity cash outflow."
+    explanation: "リース負債の元本返済部分は財務活動です。財務CFのキャッシュアウトフローに計上します（※利息部分は営業CF）。"
   },
 ];
 
@@ -799,7 +799,7 @@ function showExplanation(item, playerChoice) {
   const chosenName = CATEGORY_COLORS[playerChoice].name;
   textEl.innerHTML = `
     <p class="text-white font-bold mb-1">"${item.data.text}"</p>
-    <p class="text-gray-400 text-xs mb-2">You chose: <span class="text-red-400">${chosenName}</span> | Correct: <span class="text-green-400">${correctName}</span></p>
+    <p class="text-gray-400 text-xs mb-2">あなたの回答: <span class="text-red-400">${chosenName}</span> ｜ 正解: <span class="text-green-400">${correctName}</span></p>
     <p class="text-cyan-200">${item.data.explanation}</p>
   `;
   el.classList.add('show');
@@ -812,7 +812,7 @@ function showMissExplanation(item) {
   const correctName = CATEGORY_COLORS[item.data.category].name;
   textEl.innerHTML = `
     <p class="text-white font-bold mb-1">"${item.data.text}"</p>
-    <p class="text-yellow-400 text-xs mb-2">Time's up! Correct: <span class="text-green-400">${correctName}</span></p>
+    <p class="text-yellow-400 text-xs mb-2">時間切れ！ 正解: <span class="text-green-400">${correctName}</span></p>
     <p class="text-cyan-200">${item.data.explanation}</p>
   `;
   el.classList.add('show');
