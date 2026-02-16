@@ -5,6 +5,7 @@ const navLinks = [
   { to: "/topics", label: "論点学習" },
   { to: "/exam-guide", label: "受験ガイド" },
   { to: "/about", label: "About" },
+  { to: "/pdf-reader", label: "PDF音読" },
 ];
 
 const gameLink = { href: import.meta.env.BASE_URL + "cash-flow-river.html", label: "CF Game" };
