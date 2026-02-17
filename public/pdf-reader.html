@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PDF 音読リーダー</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.9.155/pdf.min.mjs" type="module"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Meiryo', sans-serif;
+      background: #f5f5f7;
+      color: #1d1d1f;
+      line-height: 1.6;
+      padding: 20px;
+    }
+    h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 4px; }
+    .subtitle { color: #6e6e73; font-size: 0.9rem; margin-bottom: 20px; }
+    .card {
+      background: #fff;
+      border: 1px solid #d2d2d7;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .card h2 { font-size: 1rem; font-weight: 600; margin-bottom: 12px; }
+
+    /* Drop zone */
+    .drop-zone {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 120px;
+      border: 2px dashed #d2d2d7;
+      border-radius: 12px;
+      background: #fafafa;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+      margin-bottom: 16px;
+      text-align: center;
+      padding: 16px;
+    }
+    .drop-zone:hover, .drop-zone.dragover {
+      background: #e8f0fe;
+      border-color: #0071e3;
+    }
+    .drop-zone p { font-size: 0.95rem; color: #6e6e73; }
+    .drop-zone .filename { font-weight: 600; color: #1d1d1f; }
+    .drop-zone .page-count { font-size: 0.85rem; color: #86868b; margin-top: 4px; }
+
+    /* Form controls */
+    .row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+    label.inline { display: flex; align-items: center; gap: 6px; font-size: 0.9rem; cursor: pointer; }
+    input[type="number"] {
+      width: 70px; border: 1px solid #d2d2d7; border-radius: 8px;
+      padding: 4px 8px; font-size: 0.9rem; text-align: center;
+    }
+    input[type="range"] { flex: 1; min-width: 100px; }
+    select {
+      flex: 1; border: 1px solid #d2d2d7; border-radius: 8px;
+      padding: 4px 8px; font-size: 0.9rem; min-width: 0;
+    }
+    .range-label { font-size: 0.85rem; color: #6e6e73; min-width: 50px; }
+    .range-value { font-size: 0.85rem; font-weight: 600; min-width: 40px; text-align: right; }
+    .sep { color: #86868b; }
+
+    /* Buttons */
+    .controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+    button {
+      border: none; border-radius: 10px; padding: 10px 24px;
+      font-size: 0.9rem; font-weight: 600; cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    button:hover { opacity: 0.85; }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-play { background: #0071e3; color: #fff; }
+    .btn-pause { background: #f0ad4e; color: #fff; }
+    .btn-resume { background: #34c759; color: #fff; }
+    .btn-stop { background: #ff3b30; color: #fff; }
+    .status { font-size: 0.85rem; color: #6e6e73; }
+
+    /* Text areas */
+    .text-box {
+      max-height: 300px;
+      overflow-y: auto;
+      background: #f9f9f9;
+      border: 1px solid #e5e5ea;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 0.85rem;
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.8;
+    }
+    .page-block {
+      border: 1px solid #e5e5ea;
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 8px;
+    }
+    .page-block.active { border-color: #0071e3; background: #e8f0fe; }
+    .page-label { font-size: 0.75rem; font-weight: 600; color: #86868b; margin-bottom: 4px; }
+
+    .hidden { display: none; }
+    .loading { text-align: center; padding: 40px; color: #6e6e73; }
+    .error { background: #fff0f0; border: 1px solid #ffc0c0; color: #c00; border-radius: 8px; padding: 12px; margin-bottom: 16px; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+
+<h1>PDF 音読リーダー</h1>
+<p class="subtitle">PDFをアップロードして、指定範囲を音読します。括弧やスペースも読み上げます。</p>
+
+<!-- File Upload -->
+<div class="drop-zone" id="dropZone">
+  <div>
+    <p id="dropLabel">PDFファイルをドラッグ＆ドロップ、またはクリックして選択</p>
+  </div>
+</div>
+<input type="file" id="fileInput" accept=".pdf" style="display:none" />
+
+<div id="errorBox" class="error hidden"></div>
+<div id="loadingBox" class="loading hidden">PDFを読み込み中...</div>
+
+<!-- Settings (hidden until PDF loaded) -->
+<div id="settingsArea" class="hidden">
+
+  <!-- Page Range -->
+  <div class="card">
+    <h2>読み上げ範囲</h2>
+    <div class="row">
+      <label class="inline">開始: <input type="number" id="startPage" min="1" value="1" /></label>
+      <span class="sep">〜</span>
+      <label class="inline">終了: <input type="number" id="endPage" min="1" value="1" /></label>
+      <span class="range-label" id="totalLabel">/ 全 1 ページ</span>
+    </div>
+  </div>
+
+  <!-- TTS Settings -->
+  <div class="card">
+    <h2>読み上げ設定</h2>
+    <div class="row">
+      <label class="inline"><input type="checkbox" id="chkPunctuation" checked /> 括弧・記号を読み上げる</label>
+      <label class="inline"><input type="checkbox" id="chkSpaces" checked /> スペースを読み上げる</label>
+    </div>
+    <div class="row">
+      <span class="range-label">速度:</span>
+      <input type="range" id="rateSlider" min="0.5" max="2.0" step="0.1" value="1.0" />
+      <span class="range-value" id="rateValue">1.0x</span>
+    </div>
+    <div class="row">
+      <span class="range-label">高さ:</span>
+      <input type="range" id="pitchSlider" min="0.5" max="2.0" step="0.1" value="1.0" />
+      <span class="range-value" id="pitchValue">1.0</span>
+    </div>
+    <div class="row">
+      <span class="range-label">音声:</span>
+      <select id="voiceSelect"><option value="">読み込み中...</option></select>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <button class="btn-play" id="btnPlay">再生</button>
+    <button class="btn-pause hidden" id="btnPause">一時停止</button>
+    <button class="btn-resume hidden" id="btnResume">再開</button>
+    <button class="btn-stop hidden" id="btnStop">停止</button>
+    <span class="status" id="statusText"></span>
+  </div>
+
+  <!-- Preview -->
+  <div class="card">
+    <h2>読み上げプレビュー（変換後テキスト）</h2>
+    <div class="text-box" id="previewBox">（テキストなし）</div>
+  </div>
+
+  <!-- Original Text -->
+  <div class="card">
+    <h2>抽出テキスト（元のテキスト）</h2>
+    <div class="text-box" id="originalBox"></div>
+  </div>
+</div>
+
+<script type="module">
+// ── PDF.js setup ──
+const pdfjsLib = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.9.155/pdf.min.mjs');
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.9.155/pdf.worker.min.mjs';
+
+// ── Punctuation map ──
+const PUNCTUATION_MAP = {
+  '「': ' かぎかっこ ',
+  '」': ' かぎかっこ閉じ ',
+  '『': ' 二重かぎかっこ ',
+  '』': ' 二重かぎかっこ閉じ ',
+  '（': ' かっこ ',
+  '）': ' かっこ閉じ ',
+  '(': ' かっこ ',
+  ')': ' かっこ閉じ ',
+  '【': ' すみつきかっこ ',
+  '】': ' すみつきかっこ閉じ ',
+  '〈': ' やまかっこ ',
+  '〉': ' やまかっこ閉じ ',
+  '《': ' 二重やまかっこ ',
+  '》': ' 二重やまかっこ閉じ ',
+  '\u201C': ' 引用符 ',
+  '\u201D': ' 引用符閉じ ',
+  '・': ' なかぐろ ',
+  '…': ' てんてんてん ',
+  '―': ' ダッシュ ',
+  '\u2013': ' ダッシュ ',
+  '\u2014': ' ダッシュ ',
+  '〜': ' から ',
+  '~': ' から ',
+  '※': ' こめじるし ',
+  '→': ' やじるし ',
+  '←': ' ひだりやじるし ',
+  '↑': ' うえやじるし ',
+  '↓': ' したやじるし ',
+};
+
+function convertPunctuation(text, readPunct, readSpaces) {
+  let r = text;
+  if (readPunct) {
+    for (const [ch, reading] of Object.entries(PUNCTUATION_MAP)) {
+      r = r.split(ch).join(reading);
+    }
+  }
+  if (readSpaces) {
+    r = r.replace(/ {2,}/g, m => ` ${m.length}つスペース `);
+    r = r.replace(/\u3000/g, ' 全角スペース ');
+  }
+  return r;
+}
+
+function splitChunks(text, max = 200) {
+  const chunks = [];
+  let rem = text;
+  while (rem.length > 0) {
+    if (rem.length <= max) { chunks.push(rem); break; }
+    let bp = -1;
+    for (let i = max; i >= max / 2; i--) {
+      if ('。、！？\n'.includes(rem[i])) { bp = i + 1; break; }
+    }
+    if (bp === -1) bp = max;
+    chunks.push(rem.slice(0, bp));
+    rem = rem.slice(bp);
+  }
+  return chunks;
+}
+
+// ── State ──
+let pages = []; // [{pageNum, text}]
+const synth = window.speechSynthesis;
+let speaking = false;
+let paused = false;
+
+// ── DOM refs ──
+const $ = id => document.getElementById(id);
+const dropZone = $('dropZone');
+const fileInput = $('fileInput');
+const dropLabel = $('dropLabel');
+const errorBox = $('errorBox');
+const loadingBox = $('loadingBox');
+const settingsArea = $('settingsArea');
+const startPageEl = $('startPage');
+const endPageEl = $('endPage');
+const totalLabel = $('totalLabel');
+const chkPunctuation = $('chkPunctuation');
+const chkSpaces = $('chkSpaces');
+const rateSlider = $('rateSlider');
+const rateValue = $('rateValue');
+const pitchSlider = $('pitchSlider');
+const pitchValue = $('pitchValue');
+const voiceSelect = $('voiceSelect');
+const btnPlay = $('btnPlay');
+const btnPause = $('btnPause');
+const btnResume = $('btnResume');
+const btnStop = $('btnStop');
+const statusText = $('statusText');
+const previewBox = $('previewBox');
+const originalBox = $('originalBox');
+
+// ── Voice loading ──
+function loadVoices() {
+  const all = synth.getVoices();
+  const ja = all.filter(v => v.lang.startsWith('ja'));
+  const list = ja.length > 0 ? ja : all;
+  voiceSelect.innerHTML = '';
+  list.forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v.name;
+    opt.textContent = `${v.name} (${v.lang})`;
+    voiceSelect.appendChild(opt);
+  });
+}
+loadVoices();
+speechSynthesis.addEventListener('voiceschanged', loadVoices);
+
+// ── Slider display ──
+rateSlider.addEventListener('input', () => { rateValue.textContent = (+rateSlider.value).toFixed(1) + 'x'; updatePreview(); });
+pitchSlider.addEventListener('input', () => { pitchValue.textContent = (+pitchSlider.value).toFixed(1); });
+chkPunctuation.addEventListener('change', updatePreview);
+chkSpaces.addEventListener('change', updatePreview);
+startPageEl.addEventListener('change', updatePreview);
+endPageEl.addEventListener('change', updatePreview);
+
+// ── File handling ──
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) loadPdf(file);
+});
+fileInput.addEventListener('change', () => { if (fileInput.files[0]) loadPdf(fileInput.files[0]); });
+
+async function loadPdf(file) {
+  if (file.type !== 'application/pdf' && !file.name.endsWith('.pdf')) {
+    showError('PDFファイルを選択してください。');
+    return;
+  }
+  hideError();
+  loadingBox.classList.remove('hidden');
+  settingsArea.classList.add('hidden');
+  synth.cancel();
+  updateButtons(false, false);
+
+  try {
+    const buf = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+    const n = pdf.numPages;
+
+    pages = [];
+    for (let i = 1; i <= n; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      const text = content.items.map(item => ('str' in item ? item.str : '')).join('');
+      pages.push({ pageNum: i, text });
+    }
+
+    dropLabel.innerHTML = `<span class="filename">${escHtml(file.name)}</span><br><span class="page-count">${n} ページ</span>`;
+    startPageEl.value = 1;
+    startPageEl.max = n;
+    endPageEl.value = n;
+    endPageEl.max = n;
+    totalLabel.textContent = `/ 全 ${n} ページ`;
+
+    loadingBox.classList.add('hidden');
+    settingsArea.classList.remove('hidden');
+    updatePreview();
+  } catch {
+    loadingBox.classList.add('hidden');
+    showError('PDFの読み込みに失敗しました。ファイルが壊れているか、対応していない形式の可能性があります。');
+  }
+}
+
+function updatePreview() {
+  const s = +startPageEl.value;
+  const e = +endPageEl.value;
+  const sel = pages.filter(p => p.pageNum >= s && p.pageNum <= e);
+  const raw = sel.map(p => p.text).join('\n');
+  const converted = convertPunctuation(raw, chkPunctuation.checked, chkSpaces.checked);
+  previewBox.textContent = converted || '（テキストなし）';
+
+  // Original per page
+  originalBox.innerHTML = '';
+  sel.forEach(p => {
+    const div = document.createElement('div');
+    div.className = 'page-block';
+    div.id = `page-${p.pageNum}`;
+    div.innerHTML = `<div class="page-label">ページ ${p.pageNum}</div><div>${escHtml(p.text) || '（テキストなし）'}</div>`;
+    originalBox.appendChild(div);
+  });
+}
+
+// ── TTS Controls ──
+btnPlay.addEventListener('click', startSpeaking);
+btnPause.addEventListener('click', () => { synth.pause(); updateButtons(true, true); });
+btnResume.addEventListener('click', () => { synth.resume(); updateButtons(true, false); });
+btnStop.addEventListener('click', () => { synth.cancel(); updateButtons(false, false); statusText.textContent = ''; highlightPage(null); });
+
+function startSpeaking() {
+  synth.cancel();
+  const s = +startPageEl.value;
+  const e = +endPageEl.value;
+  const sel = pages.filter(p => p.pageNum >= s && p.pageNum <= e);
+  if (sel.length === 0) return;
+
+  updateButtons(true, false);
+  let pageIdx = 0;
+
+  function speakPage(idx) {
+    if (idx >= sel.length) {
+      updateButtons(false, false);
+      statusText.textContent = '完了';
+      highlightPage(null);
+      return;
+    }
+    const pg = sel[idx];
+    highlightPage(pg.pageNum);
+    statusText.textContent = `読み上げ中: ${pg.pageNum} ページ目`;
+    const text = convertPunctuation(pg.text, chkPunctuation.checked, chkSpaces.checked);
+    if (!text.trim()) { speakPage(idx + 1); return; }
+
+    const chunks = splitChunks(text, 200);
+    let ci = 0;
+
+    function next() {
+      if (ci >= chunks.length) { speakPage(idx + 1); return; }
+      const utt = new SpeechSynthesisUtterance(chunks[ci]);
+      utt.rate = +rateSlider.value;
+      utt.pitch = +pitchSlider.value;
+      utt.lang = 'ja-JP';
+      const vName = voiceSelect.value;
+      if (vName) {
+        const v = synth.getVoices().find(v => v.name === vName);
+        if (v) utt.voice = v;
+      }
+      utt.onend = () => { ci++; next(); };
+      utt.onerror = (ev) => { if (ev.error !== 'canceled') { ci++; next(); } };
+      synth.speak(utt);
+    }
+    next();
+  }
+  speakPage(pageIdx);
+}
+
+function updateButtons(isSpeaking, isPaused) {
+  speaking = isSpeaking;
+  paused = isPaused;
+  btnPlay.classList.toggle('hidden', isSpeaking);
+  btnPause.classList.toggle('hidden', !isSpeaking || isPaused);
+  btnResume.classList.toggle('hidden', !isPaused);
+  btnStop.classList.toggle('hidden', !isSpeaking);
+}
+
+function highlightPage(num) {
+  originalBox.querySelectorAll('.page-block').forEach(el => el.classList.remove('active'));
+  if (num != null) {
+    const el = document.getElementById(`page-${num}`);
+    if (el) { el.classList.add('active'); el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+  }
+}
+
+// ── Helpers ──
+function showError(msg) { errorBox.textContent = msg; errorBox.classList.remove('hidden'); }
+function hideError() { errorBox.classList.add('hidden'); }
+function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+</script>
+</body>
+</html>
