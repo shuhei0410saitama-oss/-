@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PDF 音読リーダー</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.9.155/pdf.min.mjs" type="module"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -181,65 +181,106 @@
   </div>
 </div>
 
-<script type="module">
+<script>
 // ── PDF.js setup ──
-const pdfjsLib = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.9.155/pdf.min.mjs');
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.9.155/pdf.worker.min.mjs';
+var pdfjsLib = window['pdfjs-dist/build/pdf'];
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
 // ── Punctuation map ──
-const PUNCTUATION_MAP = {
-  '「': ' かぎかっこ ',
-  '」': ' かぎかっこ閉じ ',
-  '『': ' 二重かぎかっこ ',
-  '』': ' 二重かぎかっこ閉じ ',
-  '（': ' かっこ ',
-  '）': ' かっこ閉じ ',
-  '(': ' かっこ ',
-  ')': ' かっこ閉じ ',
-  '【': ' すみつきかっこ ',
-  '】': ' すみつきかっこ閉じ ',
-  '〈': ' やまかっこ ',
-  '〉': ' やまかっこ閉じ ',
-  '《': ' 二重やまかっこ ',
-  '》': ' 二重やまかっこ閉じ ',
-  '\u201C': ' 引用符 ',
-  '\u201D': ' 引用符閉じ ',
-  '・': ' なかぐろ ',
-  '…': ' てんてんてん ',
-  '―': ' ダッシュ ',
-  '\u2013': ' ダッシュ ',
-  '\u2014': ' ダッシュ ',
-  '〜': ' から ',
-  '~': ' から ',
-  '※': ' こめじるし ',
-  '→': ' やじるし ',
-  '←': ' ひだりやじるし ',
-  '↑': ' うえやじるし ',
-  '↓': ' したやじるし ',
+var PUNCTUATION_MAP = {
+  '\u300C': ' \u304B\u304E\u304B\u3063\u3053 ',
+  '\u300D': ' \u304B\u304E\u304B\u3063\u3053\u9589\u3058 ',
+  '\u300E': ' \u4E8C\u91CD\u304B\u304E\u304B\u3063\u3053 ',
+  '\u300F': ' \u4E8C\u91CD\u304B\u304E\u304B\u3063\u3053\u9589\u3058 ',
+  '\uFF08': ' \u304B\u3063\u3053 ',
+  '\uFF09': ' \u304B\u3063\u3053\u9589\u3058 ',
+  '(': ' \u304B\u3063\u3053 ',
+  ')': ' \u304B\u3063\u3053\u9589\u3058 ',
+  '\u3010': ' \u3059\u307F\u3064\u304D\u304B\u3063\u3053 ',
+  '\u3011': ' \u3059\u307F\u3064\u304D\u304B\u3063\u3053\u9589\u3058 ',
+  '\u3008': ' \u3084\u307E\u304B\u3063\u3053 ',
+  '\u3009': ' \u3084\u307E\u304B\u3063\u3053\u9589\u3058 ',
+  '\u300A': ' \u4E8C\u91CD\u3084\u307E\u304B\u3063\u3053 ',
+  '\u300B': ' \u4E8C\u91CD\u3084\u307E\u304B\u3063\u3053\u9589\u3058 ',
+  '\u201C': ' \u5F15\u7528\u7B26 ',
+  '\u201D': ' \u5F15\u7528\u7B26\u9589\u3058 ',
+  '\u30FB': ' \u306A\u304B\u3050\u308D ',
+  '\u2026': ' \u3066\u3093\u3066\u3093\u3066\u3093 ',
+  '\u2015': ' \u30C0\u30C3\u30B7\u30E5 ',
+  '\u2013': ' \u30C0\u30C3\u30B7\u30E5 ',
+  '\u2014': ' \u30C0\u30C3\u30B7\u30E5 ',
+  '\u301C': ' \u304B\u3089 ',
+  '~': ' \u304B\u3089 ',
+  '\u203B': ' \u3053\u3081\u3058\u308B\u3057 ',
+  '\u2192': ' \u3084\u3058\u308B\u3057 ',
+  '\u2190': ' \u3072\u3060\u308A\u3084\u3058\u308B\u3057 ',
+  '\u2191': ' \u3046\u3048\u3084\u3058\u308B\u3057 ',
+  '\u2193': ' \u3057\u305F\u3084\u3058\u308B\u3057 '
 };
 
+// More readable aliases for display
+var PUNCTUATION_MAP_DISPLAY = {};
+</script>
+<script>
+// Use readable strings instead of unicode escapes
+(function() {
+  var map = {
+    '\u300C': ' かぎかっこ ',
+    '\u300D': ' かぎかっこ閉じ ',
+    '\u300E': ' 二重かぎかっこ ',
+    '\u300F': ' 二重かぎかっこ閉じ ',
+    '\uFF08': ' かっこ ',
+    '\uFF09': ' かっこ閉じ ',
+    '(': ' かっこ ',
+    ')': ' かっこ閉じ ',
+    '\u3010': ' すみつきかっこ ',
+    '\u3011': ' すみつきかっこ閉じ ',
+    '\u3008': ' やまかっこ ',
+    '\u3009': ' やまかっこ閉じ ',
+    '\u300A': ' 二重やまかっこ ',
+    '\u300B': ' 二重やまかっこ閉じ ',
+    '\u201C': ' 引用符 ',
+    '\u201D': ' 引用符閉じ ',
+    '\u30FB': ' なかぐろ ',
+    '\u2026': ' てんてんてん ',
+    '\u2015': ' ダッシュ ',
+    '\u2013': ' ダッシュ ',
+    '\u2014': ' ダッシュ ',
+    '\u301C': ' から ',
+    '~': ' から ',
+    '\u203B': ' こめじるし ',
+    '\u2192': ' やじるし ',
+    '\u2190': ' ひだりやじるし ',
+    '\u2191': ' うえやじるし ',
+    '\u2193': ' したやじるし '
+  };
+  PUNCTUATION_MAP = map;
+})();
+
 function convertPunctuation(text, readPunct, readSpaces) {
-  let r = text;
+  var r = text;
   if (readPunct) {
-    for (const [ch, reading] of Object.entries(PUNCTUATION_MAP)) {
-      r = r.split(ch).join(reading);
+    var keys = Object.keys(PUNCTUATION_MAP);
+    for (var i = 0; i < keys.length; i++) {
+      r = r.split(keys[i]).join(PUNCTUATION_MAP[keys[i]]);
     }
   }
   if (readSpaces) {
-    r = r.replace(/ {2,}/g, m => ` ${m.length}つスペース `);
+    r = r.replace(/ {2,}/g, function(m) { return ' ' + m.length + 'つスペース '; });
     r = r.replace(/\u3000/g, ' 全角スペース ');
   }
   return r;
 }
 
-function splitChunks(text, max = 200) {
-  const chunks = [];
-  let rem = text;
+function splitChunks(text, max) {
+  max = max || 200;
+  var chunks = [];
+  var rem = text;
   while (rem.length > 0) {
     if (rem.length <= max) { chunks.push(rem); break; }
-    let bp = -1;
-    for (let i = max; i >= max / 2; i--) {
-      if ('。、！？\n'.includes(rem[i])) { bp = i + 1; break; }
+    var bp = -1;
+    for (var i = max; i >= max / 2; i--) {
+      if ('。、！？\n'.indexOf(rem[i]) !== -1) { bp = i + 1; break; }
     }
     if (bp === -1) bp = max;
     chunks.push(rem.slice(0, bp));
@@ -249,75 +290,80 @@ function splitChunks(text, max = 200) {
 }
 
 // ── State ──
-let pages = []; // [{pageNum, text}]
-const synth = window.speechSynthesis;
-let speaking = false;
-let paused = false;
+var pages = [];
+var synth = window.speechSynthesis;
 
 // ── DOM refs ──
-const $ = id => document.getElementById(id);
-const dropZone = $('dropZone');
-const fileInput = $('fileInput');
-const dropLabel = $('dropLabel');
-const errorBox = $('errorBox');
-const loadingBox = $('loadingBox');
-const settingsArea = $('settingsArea');
-const startPageEl = $('startPage');
-const endPageEl = $('endPage');
-const totalLabel = $('totalLabel');
-const chkPunctuation = $('chkPunctuation');
-const chkSpaces = $('chkSpaces');
-const rateSlider = $('rateSlider');
-const rateValue = $('rateValue');
-const pitchSlider = $('pitchSlider');
-const pitchValue = $('pitchValue');
-const voiceSelect = $('voiceSelect');
-const btnPlay = $('btnPlay');
-const btnPause = $('btnPause');
-const btnResume = $('btnResume');
-const btnStop = $('btnStop');
-const statusText = $('statusText');
-const previewBox = $('previewBox');
-const originalBox = $('originalBox');
+function $(id) { return document.getElementById(id); }
+var dropZone = $('dropZone');
+var fileInput = $('fileInput');
+var dropLabel = $('dropLabel');
+var errorBox = $('errorBox');
+var loadingBox = $('loadingBox');
+var settingsArea = $('settingsArea');
+var startPageEl = $('startPage');
+var endPageEl = $('endPage');
+var totalLabel = $('totalLabel');
+var chkPunctuation = $('chkPunctuation');
+var chkSpaces = $('chkSpaces');
+var rateSlider = $('rateSlider');
+var rateValueEl = $('rateValue');
+var pitchSlider = $('pitchSlider');
+var pitchValueEl = $('pitchValue');
+var voiceSelect = $('voiceSelect');
+var btnPlay = $('btnPlay');
+var btnPause = $('btnPause');
+var btnResume = $('btnResume');
+var btnStop = $('btnStop');
+var statusText = $('statusText');
+var previewBox = $('previewBox');
+var originalBox = $('originalBox');
 
 // ── Voice loading ──
 function loadVoices() {
-  const all = synth.getVoices();
-  const ja = all.filter(v => v.lang.startsWith('ja'));
-  const list = ja.length > 0 ? ja : all;
+  var all = synth.getVoices();
+  var ja = all.filter(function(v) { return v.lang.indexOf('ja') === 0; });
+  var list = ja.length > 0 ? ja : all;
   voiceSelect.innerHTML = '';
-  list.forEach(v => {
-    const opt = document.createElement('option');
-    opt.value = v.name;
-    opt.textContent = `${v.name} (${v.lang})`;
+  for (var i = 0; i < list.length; i++) {
+    var opt = document.createElement('option');
+    opt.value = list[i].name;
+    opt.textContent = list[i].name + ' (' + list[i].lang + ')';
     voiceSelect.appendChild(opt);
-  });
+  }
 }
 loadVoices();
-speechSynthesis.addEventListener('voiceschanged', loadVoices);
+if (speechSynthesis.addEventListener) {
+  speechSynthesis.addEventListener('voiceschanged', loadVoices);
+}
 
 // ── Slider display ──
-rateSlider.addEventListener('input', () => { rateValue.textContent = (+rateSlider.value).toFixed(1) + 'x'; updatePreview(); });
-pitchSlider.addEventListener('input', () => { pitchValue.textContent = (+pitchSlider.value).toFixed(1); });
+rateSlider.addEventListener('input', function() {
+  rateValueEl.textContent = parseFloat(rateSlider.value).toFixed(1) + 'x';
+  updatePreview();
+});
+pitchSlider.addEventListener('input', function() {
+  pitchValueEl.textContent = parseFloat(pitchSlider.value).toFixed(1);
+});
 chkPunctuation.addEventListener('change', updatePreview);
 chkSpaces.addEventListener('change', updatePreview);
 startPageEl.addEventListener('change', updatePreview);
 endPageEl.addEventListener('change', updatePreview);
 
 // ── File handling ──
-dropZone.addEventListener('click', () => fileInput.click());
-dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
-dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
-dropZone.addEventListener('drop', e => {
+dropZone.addEventListener('click', function() { fileInput.click(); });
+dropZone.addEventListener('dragover', function(e) { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', function() { dropZone.classList.remove('dragover'); });
+dropZone.addEventListener('drop', function(e) {
   e.preventDefault();
   dropZone.classList.remove('dragover');
-  const file = e.dataTransfer.files[0];
-  if (file) loadPdf(file);
+  var file = e.dataTransfer.files[0];
+  if (file) loadPdfFile(file);
 });
-fileInput.addEventListener('change', () => { if (fileInput.files[0]) loadPdf(fileInput.files[0]); });
+fileInput.addEventListener('change', function() { if (fileInput.files[0]) loadPdfFile(fileInput.files[0]); });
 
-async function loadPdf(file) {
-  if (file.type !== 'application/pdf' && !file.name.endsWith('.pdf')) {
+function loadPdfFile(file) {
+  if (!file.name.toLowerCase().endsWith('.pdf')) {
     showError('PDFファイルを選択してください。');
     return;
   }
@@ -327,69 +373,89 @@ async function loadPdf(file) {
   synth.cancel();
   updateButtons(false, false);
 
-  try {
-    const buf = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
-    const n = pdf.numPages;
+  var reader = new FileReader();
+  reader.onload = function() {
+    var typedArray = new Uint8Array(reader.result);
+    pdfjsLib.getDocument({ data: typedArray }).promise.then(function(pdf) {
+      var n = pdf.numPages;
+      pages = [];
+      var loaded = 0;
 
-    pages = [];
-    for (let i = 1; i <= n; i++) {
-      const page = await pdf.getPage(i);
-      const content = await page.getTextContent();
-      const text = content.items.map(item => ('str' in item ? item.str : '')).join('');
-      pages.push({ pageNum: i, text });
-    }
+      function onPageDone() {
+        loaded++;
+        if (loaded === n) {
+          pages.sort(function(a, b) { return a.pageNum - b.pageNum; });
+          dropLabel.innerHTML = '<span class="filename">' + escHtml(file.name) + '</span><br><span class="page-count">' + n + ' ページ</span>';
+          startPageEl.value = 1;
+          startPageEl.max = n;
+          endPageEl.value = n;
+          endPageEl.max = n;
+          totalLabel.textContent = '/ 全 ' + n + ' ページ';
+          loadingBox.classList.add('hidden');
+          settingsArea.classList.remove('hidden');
+          updatePreview();
+        }
+      }
 
-    dropLabel.innerHTML = `<span class="filename">${escHtml(file.name)}</span><br><span class="page-count">${n} ページ</span>`;
-    startPageEl.value = 1;
-    startPageEl.max = n;
-    endPageEl.value = n;
-    endPageEl.max = n;
-    totalLabel.textContent = `/ 全 ${n} ページ`;
-
-    loadingBox.classList.add('hidden');
-    settingsArea.classList.remove('hidden');
-    updatePreview();
-  } catch {
-    loadingBox.classList.add('hidden');
-    showError('PDFの読み込みに失敗しました。ファイルが壊れているか、対応していない形式の可能性があります。');
-  }
+      for (var i = 1; i <= n; i++) {
+        (function(pageNum) {
+          pdf.getPage(pageNum).then(function(page) {
+            page.getTextContent().then(function(content) {
+              var text = content.items.map(function(item) {
+                return item.str || '';
+              }).join('');
+              pages.push({ pageNum: pageNum, text: text });
+              onPageDone();
+            });
+          });
+        })(i);
+      }
+    }).catch(function() {
+      loadingBox.classList.add('hidden');
+      showError('PDFの読み込みに失敗しました。ファイルが壊れているか、対応していない形式の可能性があります。');
+    });
+  };
+  reader.readAsArrayBuffer(file);
 }
 
 function updatePreview() {
-  const s = +startPageEl.value;
-  const e = +endPageEl.value;
-  const sel = pages.filter(p => p.pageNum >= s && p.pageNum <= e);
-  const raw = sel.map(p => p.text).join('\n');
-  const converted = convertPunctuation(raw, chkPunctuation.checked, chkSpaces.checked);
+  var s = parseInt(startPageEl.value, 10);
+  var e = parseInt(endPageEl.value, 10);
+  var sel = pages.filter(function(p) { return p.pageNum >= s && p.pageNum <= e; });
+  var raw = sel.map(function(p) { return p.text; }).join('\n');
+  var converted = convertPunctuation(raw, chkPunctuation.checked, chkSpaces.checked);
   previewBox.textContent = converted || '（テキストなし）';
 
-  // Original per page
   originalBox.innerHTML = '';
-  sel.forEach(p => {
-    const div = document.createElement('div');
+  for (var i = 0; i < sel.length; i++) {
+    var div = document.createElement('div');
     div.className = 'page-block';
-    div.id = `page-${p.pageNum}`;
-    div.innerHTML = `<div class="page-label">ページ ${p.pageNum}</div><div>${escHtml(p.text) || '（テキストなし）'}</div>`;
+    div.id = 'page-' + sel[i].pageNum;
+    var label = document.createElement('div');
+    label.className = 'page-label';
+    label.textContent = 'ページ ' + sel[i].pageNum;
+    var body = document.createElement('div');
+    body.textContent = sel[i].text || '（テキストなし）';
+    div.appendChild(label);
+    div.appendChild(body);
     originalBox.appendChild(div);
-  });
+  }
 }
 
 // ── TTS Controls ──
 btnPlay.addEventListener('click', startSpeaking);
-btnPause.addEventListener('click', () => { synth.pause(); updateButtons(true, true); });
-btnResume.addEventListener('click', () => { synth.resume(); updateButtons(true, false); });
-btnStop.addEventListener('click', () => { synth.cancel(); updateButtons(false, false); statusText.textContent = ''; highlightPage(null); });
+btnPause.addEventListener('click', function() { synth.pause(); updateButtons(true, true); });
+btnResume.addEventListener('click', function() { synth.resume(); updateButtons(true, false); });
+btnStop.addEventListener('click', function() { synth.cancel(); updateButtons(false, false); statusText.textContent = ''; highlightPage(null); });
 
 function startSpeaking() {
   synth.cancel();
-  const s = +startPageEl.value;
-  const e = +endPageEl.value;
-  const sel = pages.filter(p => p.pageNum >= s && p.pageNum <= e);
+  var s = parseInt(startPageEl.value, 10);
+  var e = parseInt(endPageEl.value, 10);
+  var sel = pages.filter(function(p) { return p.pageNum >= s && p.pageNum <= e; });
   if (sel.length === 0) return;
 
   updateButtons(true, false);
-  let pageIdx = 0;
 
   function speakPage(idx) {
     if (idx >= sel.length) {
@@ -398,38 +464,38 @@ function startSpeaking() {
       highlightPage(null);
       return;
     }
-    const pg = sel[idx];
+    var pg = sel[idx];
     highlightPage(pg.pageNum);
-    statusText.textContent = `読み上げ中: ${pg.pageNum} ページ目`;
-    const text = convertPunctuation(pg.text, chkPunctuation.checked, chkSpaces.checked);
+    statusText.textContent = '読み上げ中: ' + pg.pageNum + ' ページ目';
+    var text = convertPunctuation(pg.text, chkPunctuation.checked, chkSpaces.checked);
     if (!text.trim()) { speakPage(idx + 1); return; }
 
-    const chunks = splitChunks(text, 200);
-    let ci = 0;
+    var chunks = splitChunks(text, 200);
+    var ci = 0;
 
     function next() {
       if (ci >= chunks.length) { speakPage(idx + 1); return; }
-      const utt = new SpeechSynthesisUtterance(chunks[ci]);
-      utt.rate = +rateSlider.value;
-      utt.pitch = +pitchSlider.value;
+      var utt = new SpeechSynthesisUtterance(chunks[ci]);
+      utt.rate = parseFloat(rateSlider.value);
+      utt.pitch = parseFloat(pitchSlider.value);
       utt.lang = 'ja-JP';
-      const vName = voiceSelect.value;
+      var vName = voiceSelect.value;
       if (vName) {
-        const v = synth.getVoices().find(v => v.name === vName);
-        if (v) utt.voice = v;
+        var voices = synth.getVoices();
+        for (var v = 0; v < voices.length; v++) {
+          if (voices[v].name === vName) { utt.voice = voices[v]; break; }
+        }
       }
-      utt.onend = () => { ci++; next(); };
-      utt.onerror = (ev) => { if (ev.error !== 'canceled') { ci++; next(); } };
+      utt.onend = function() { ci++; next(); };
+      utt.onerror = function(ev) { if (ev.error !== 'canceled') { ci++; next(); } };
       synth.speak(utt);
     }
     next();
   }
-  speakPage(pageIdx);
+  speakPage(0);
 }
 
 function updateButtons(isSpeaking, isPaused) {
-  speaking = isSpeaking;
-  paused = isPaused;
   btnPlay.classList.toggle('hidden', isSpeaking);
   btnPause.classList.toggle('hidden', !isSpeaking || isPaused);
   btnResume.classList.toggle('hidden', !isPaused);
@@ -437,9 +503,10 @@ function updateButtons(isSpeaking, isPaused) {
 }
 
 function highlightPage(num) {
-  originalBox.querySelectorAll('.page-block').forEach(el => el.classList.remove('active'));
+  var blocks = originalBox.querySelectorAll('.page-block');
+  for (var i = 0; i < blocks.length; i++) blocks[i].classList.remove('active');
   if (num != null) {
-    const el = document.getElementById(`page-${num}`);
+    var el = document.getElementById('page-' + num);
     if (el) { el.classList.add('active'); el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
   }
 }
@@ -447,7 +514,7 @@ function highlightPage(num) {
 // ── Helpers ──
 function showError(msg) { errorBox.textContent = msg; errorBox.classList.remove('hidden'); }
 function hideError() { errorBox.classList.add('hidden'); }
-function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function escHtml(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 </script>
 </body>
 </html>
