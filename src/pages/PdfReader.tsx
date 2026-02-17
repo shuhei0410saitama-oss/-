@@ -1,10 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import * as pdfjsLib from 'pdfjs-dist'
+import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url,
-).toString()
+pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl
 
 /** 括弧・記号を読み上げテキストに変換するマッピング */
 const PUNCTUATION_MAP: Record<string, string> = {
