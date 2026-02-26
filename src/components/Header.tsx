@@ -4,6 +4,7 @@ import { Link, useLocation } from "react-router-dom";
 const navLinks = [
   { to: "/topics", label: "論点学習" },
   { to: "/exam-guide", label: "受験ガイド" },
+  { to: "/explainer", label: "なんでも解説" },
   { to: "/about", label: "About" },
 ];
 

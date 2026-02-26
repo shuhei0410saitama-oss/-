@@ -6,6 +6,7 @@ import TopicList from './pages/TopicList'
 import TopicDetail from './pages/TopicDetail'
 import ExamGuide from './pages/ExamGuide'
 import About from './pages/About'
+import ExplainerTool from './pages/ExplainerTool'
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
           <Route path="/exam-guide" element={<ExamGuide />} />
           <Route path="/exam-guide/:slug" element={<ExamGuide />} />
           <Route path="/about" element={<About />} />
+          <Route path="/explainer" element={<ExplainerTool />} />
         </Routes>
       </main>
       <Footer />
